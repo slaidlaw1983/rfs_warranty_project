@@ -1,0 +1,1722 @@
+[
+  {
+    "id": "roof_asphalt_shingle",
+    "name": "Roof - Asphalt Shingle",
+    "category": "Roofing",
+    "unit": "sqft",
+    "unit_cost": 17.7,
+    "design_life_years": 20,
+    "cost_includes": "Tear-off; disposal; ice & water shield; synthetic underlayment; architectural shingles; drip edge; ridge cap; minor flashing repairs",
+    "notes": "Architectural grade. +15% for impact-resistant product."
+  },
+  {
+    "id": "roof_bur_tar_gravel",
+    "name": "Roof - BUR/Tar and Gravel",
+    "category": "Roofing",
+    "unit": "sqft",
+    "unit_cost": 21.24,
+    "design_life_years": 20,
+    "cost_includes": "Removal of existing BUR; disposal; new base sheets; interply bitumen; gravel ballast",
+    "notes": ""
+  },
+  {
+    "id": "roof_epdm_pvc_tpo",
+    "name": "Roof - EPDM/PVC/TPO",
+    "category": "Roofing",
+    "unit": "sqft",
+    "unit_cost": 25.96,
+    "design_life_years": 25,
+    "cost_includes": "Removal of existing membrane; disposal; cover board; new fully adhered membrane; flashings at penetrations and perimeter",
+    "notes": ""
+  },
+  {
+    "id": "roof_sbs_membrane",
+    "name": "Roof - SBS Membrane",
+    "category": "Roofing",
+    "unit": "sqft",
+    "unit_cost": 23.6,
+    "design_life_years": 25,
+    "cost_includes": "Removal of existing; disposal; base sheet; SBS cap sheet torch-applied; perimeter flashings; penetration flashings",
+    "notes": ""
+  },
+  {
+    "id": "roof_metal",
+    "name": "Roof - Metal Roofing",
+    "category": "Roofing",
+    "unit": "sqft",
+    "unit_cost": 41.3,
+    "design_life_years": 40,
+    "cost_includes": "Removal of existing; disposal; new standing seam or concealed fastener metal panels; underlayment; snow guards on steep slope",
+    "notes": ""
+  },
+  {
+    "id": "roof_clay_concrete_tile",
+    "name": "Roof - Clay/Concrete Tiles",
+    "category": "Roofing",
+    "unit": "sqft",
+    "unit_cost": 49.56,
+    "design_life_years": 50,
+    "cost_includes": "Removal of existing; disposal; waterproofing underlayment; new tiles; ridge and hip tiles; mortar pointing",
+    "notes": ""
+  },
+  {
+    "id": "roof_wood_shingle",
+    "name": "Roof - Wood Shingles",
+    "category": "Roofing",
+    "unit": "sqft",
+    "unit_cost": 25.96,
+    "design_life_years": 20,
+    "cost_includes": "Removal of existing; disposal; felt underlayment; new cedar shingles; ridge cap",
+    "notes": ""
+  },
+  {
+    "id": "roof_fascia",
+    "name": "Roof - Fascia",
+    "category": "Roofing",
+    "unit": "lnft",
+    "unit_cost": 33.04,
+    "design_life_years": 25,
+    "cost_includes": "Removal of existing; disposal; new aluminum or prefinished steel fascia; concealed fasteners",
+    "notes": ""
+  },
+  {
+    "id": "parapet_flashing",
+    "name": "Parapet Flashing",
+    "category": "Roofing",
+    "unit": "lnft",
+    "unit_cost": 64.9,
+    "design_life_years": 20,
+    "cost_includes": "Removal of existing; disposal; new sheet metal coping/parapet cap; waterproofing membrane under cap; sealant",
+    "notes": ""
+  },
+  {
+    "id": "flashing",
+    "name": "Flashing",
+    "category": "Roofing",
+    "unit": "lnft",
+    "unit_cost": 41.3,
+    "design_life_years": 20,
+    "cost_includes": "Removal of existing; new sheet metal flashing; sealant; integration with adjacent roofing",
+    "notes": ""
+  },
+  {
+    "id": "skylights",
+    "name": "Skylights",
+    "category": "Roofing",
+    "unit": "ea",
+    "unit_cost": 5310,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new thermopane fixed or venting skylight; new curb if required; flashing; interior trim repair",
+    "notes": ""
+  },
+  {
+    "id": "siding_brick",
+    "name": "Siding - Brick",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 64.9,
+    "design_life_years": 40,
+    "cost_includes": "Removal of damaged/spalled brick; disposal; new matching brick; mortar; wall ties; collateral patching of adjacent siding and trim",
+    "notes": "Full replacement scenario. Repointing only ~$12/sqft."
+  },
+  {
+    "id": "siding_stucco",
+    "name": "Siding - Stucco",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 41.3,
+    "design_life_years": 20,
+    "cost_includes": "Removal of existing; disposal; new metal lath; scratch coat; brown coat; finish coat; paint; caulking at all openings",
+    "notes": ""
+  },
+  {
+    "id": "siding_vinyl",
+    "name": "Siding - Vinyl",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 18.88,
+    "design_life_years": 25,
+    "cost_includes": "Removal of existing; disposal; new vinyl siding; trim channels; J-channel at openings; house wrap if required",
+    "notes": ""
+  },
+  {
+    "id": "siding_hardie_plank",
+    "name": "Siding - Hardie Plank",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 33.04,
+    "design_life_years": 30,
+    "cost_includes": "Removal; disposal; new fiber cement panels/planks; trim; primer and two finish coats paint; caulking",
+    "notes": ""
+  },
+  {
+    "id": "siding_cedar_shake",
+    "name": "Siding - Cedar Shake",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 35.4,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new cedar shakes; building paper; trim; stain/preservative treatment",
+    "notes": ""
+  },
+  {
+    "id": "siding_acm_panel",
+    "name": "Siding - ACM Panel",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 70.8,
+    "design_life_years": 30,
+    "cost_includes": "Removal; disposal; new aluminum composite panel system; sub-framing; sealant joints",
+    "notes": ""
+  },
+  {
+    "id": "siding_metal",
+    "name": "Siding - Metal",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 56.64,
+    "design_life_years": 30,
+    "cost_includes": "Removal; disposal; new insulated metal panels or metal cladding; sub-framing",
+    "notes": ""
+  },
+  {
+    "id": "siding_stone_veneer",
+    "name": "Siding - Stone Veneer",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 82.6,
+    "design_life_years": 30,
+    "cost_includes": "Removal; disposal; new manufactured or natural stone veneer; mortar; parging base; sealant",
+    "notes": ""
+  },
+  {
+    "id": "siding_cinder_block",
+    "name": "Siding - Cinder Block",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 53.1,
+    "design_life_years": 40,
+    "cost_includes": "Repointing/repair; parging; sealing. Assumes surface restoration.",
+    "notes": "Full reconstruction significantly higher."
+  },
+  {
+    "id": "siding_manufactured_wood",
+    "name": "Siding - Manufactured Wood",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 28.32,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new engineered wood siding; primer; two coats paint; caulking",
+    "notes": ""
+  },
+  {
+    "id": "siding_vinyl_shakes",
+    "name": "Siding - Vinyl Shakes",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 21.24,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new vinyl shake panels; trim",
+    "notes": ""
+  },
+  {
+    "id": "siding_wood",
+    "name": "Siding - Wood",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 33.04,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new wood siding (pine/spruce); primer; two coats paint; caulking",
+    "notes": ""
+  },
+  {
+    "id": "curtain_wall",
+    "name": "Curtain Wall",
+    "category": "Siding",
+    "unit": "sqft",
+    "unit_cost": 206.5,
+    "design_life_years": 30,
+    "cost_includes": "Removal of existing system; disposal; new aluminum curtain wall framing; thermopane glazing; sealant; interior framing patching",
+    "notes": ""
+  },
+  {
+    "id": "balcony_frames",
+    "name": "Balcony - Frames",
+    "category": "Balconies & Decks",
+    "unit": "sqft",
+    "unit_cost": 88.5,
+    "design_life_years": 30,
+    "cost_includes": "Removal of existing structural framing; disposal; new steel or concrete frame system; galvanized connections; primer coating",
+    "notes": "Steel frame assumed. Concrete frame add 25%."
+  },
+  {
+    "id": "balcony_membrane",
+    "name": "Balcony Membrane",
+    "category": "Balconies & Decks",
+    "unit": "sqft",
+    "unit_cost": 25.96,
+    "design_life_years": 15,
+    "cost_includes": "Removal of existing membrane; disposal; surface prep; new liquid-applied or sheet membrane; protection board; drains",
+    "notes": ""
+  },
+  {
+    "id": "balcony_overlay",
+    "name": "Balcony Overlay",
+    "category": "Balconies & Decks",
+    "unit": "sqft",
+    "unit_cost": 33.04,
+    "design_life_years": 15,
+    "cost_includes": "Removal of existing overlay; disposal; surface prep; new overlay system (elastomeric or composite); non-slip finish",
+    "notes": ""
+  },
+  {
+    "id": "concrete_balcony",
+    "name": "Concrete Balcony",
+    "category": "Balconies & Decks",
+    "unit": "sqft",
+    "unit_cost": 106.2,
+    "design_life_years": 30,
+    "cost_includes": "Demolition of existing concrete slab; disposal; shoring; new reinforced concrete slab; waterproofing membrane; drainage",
+    "notes": ""
+  },
+  {
+    "id": "concrete_patio",
+    "name": "Concrete - Patio",
+    "category": "Balconies & Decks",
+    "unit": "sqft",
+    "unit_cost": 28.32,
+    "design_life_years": 25,
+    "cost_includes": "Removal of existing; disposal; new reinforced concrete patio slab; base prep; curing; broom finish",
+    "notes": ""
+  },
+  {
+    "id": "deck",
+    "name": "Deck",
+    "category": "Balconies & Decks",
+    "unit": "sqft",
+    "unit_cost": 70.8,
+    "design_life_years": 20,
+    "cost_includes": "Removal of existing decking; disposal; new composite or pressure-treated wood decking; joist repairs if needed; staining/sealing",
+    "notes": ""
+  },
+  {
+    "id": "deck_stairs",
+    "name": "Deck Stairs",
+    "category": "Balconies & Decks",
+    "unit": "ea",
+    "unit_cost": 4130,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new pressure-treated or composite stair stringers; treads; handrail system",
+    "notes": "Per flight (3-5 risers)."
+  },
+  {
+    "id": "balcony_railings_aluminum",
+    "name": "Balcony Railings - Aluminum",
+    "category": "Railings",
+    "unit": "lnft",
+    "unit_cost": 153.4,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new powder-coated aluminum railing system; post sleeves; top rail; balusters; anchoring to deck/slab",
+    "notes": ""
+  },
+  {
+    "id": "balcony_railings_wood",
+    "name": "Balcony Railings - Wood",
+    "category": "Railings",
+    "unit": "lnft",
+    "unit_cost": 106.2,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new pressure-treated wood posts; rails; balusters; staining",
+    "notes": ""
+  },
+  {
+    "id": "railings_glass",
+    "name": "Railings - Glass",
+    "category": "Railings",
+    "unit": "lnft",
+    "unit_cost": 259.6,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new frameless or semi-frameless tempered glass panel system; aluminum top rail; anchoring",
+    "notes": ""
+  },
+  {
+    "id": "railings_aluminum",
+    "name": "Railings - Aluminum",
+    "category": "Railings",
+    "unit": "lnft",
+    "unit_cost": 118,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new aluminum post and rail system; powder coat finish",
+    "notes": "Site/common areas."
+  },
+  {
+    "id": "railings_metal",
+    "name": "Railings - Metal",
+    "category": "Railings",
+    "unit": "lnft",
+    "unit_cost": 141.6,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new galvanized steel welded rail system; priming; paint",
+    "notes": ""
+  },
+  {
+    "id": "railings_wood",
+    "name": "Railing - Woods",
+    "category": "Railings",
+    "unit": "lnft",
+    "unit_cost": 94.4,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new wood post and rail; staining",
+    "notes": ""
+  },
+  {
+    "id": "hand_railings",
+    "name": "Hand Railings",
+    "category": "Railings",
+    "unit": "lnft",
+    "unit_cost": 74.75,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new handrail; brackets; wall anchors; painting",
+    "notes": "Interior."
+  },
+  {
+    "id": "windows",
+    "name": "Windows",
+    "category": "Windows & Doors",
+    "unit": "ea",
+    "unit_cost": 1652,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new double-pane vinyl or aluminum frame window; caulking exterior; interior trim repair; painting",
+    "notes": "Standard residential size (~3x4 ft). +25% for large picture windows."
+  },
+  {
+    "id": "doors_common_entrance",
+    "name": "Doors - Common Entrance",
+    "category": "Windows & Doors",
+    "unit": "ea",
+    "unit_cost": 5310,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new commercial-grade aluminum/glass or steel entrance door with closer; weatherstripping; frame; caulking",
+    "notes": ""
+  },
+  {
+    "id": "doors_garage",
+    "name": "Doors - Garage",
+    "category": "Windows & Doors",
+    "unit": "ea",
+    "unit_cost": 4130,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new insulated steel sectional door; spring system; hardware; weatherstripping",
+    "notes": ""
+  },
+  {
+    "id": "doors_sliding",
+    "name": "Doors - Sliding",
+    "category": "Windows & Doors",
+    "unit": "ea",
+    "unit_cost": 3304,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new double-pane vinyl or aluminum sliding patio door; hardware; weatherstripping; caulking; interior trim repair",
+    "notes": ""
+  },
+  {
+    "id": "doors_swing",
+    "name": "Doors - Swing",
+    "category": "Windows & Doors",
+    "unit": "ea",
+    "unit_cost": 2596,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new fiberglass or steel entry door; frame; weatherstripping; hardware; caulking; painting",
+    "notes": ""
+  },
+  {
+    "id": "doors_interior",
+    "name": "Doors - Interior",
+    "category": "Windows & Doors",
+    "unit": "ea",
+    "unit_cost": 1610,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new pre-hung solid-core door; frame; hardware; painting",
+    "notes": "Common area corridors/stairwells."
+  },
+  {
+    "id": "soffits",
+    "name": "Soffits",
+    "category": "Soffits & Drainage",
+    "unit": "sqft",
+    "unit_cost": 14.16,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new vinyl soffit panels; trim",
+    "notes": ""
+  },
+  {
+    "id": "soffits_aluminum",
+    "name": "Soffits - Aluminum",
+    "category": "Soffits & Drainage",
+    "unit": "sqft",
+    "unit_cost": 17.7,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new aluminum perforated soffit panels; trim channels",
+    "notes": ""
+  },
+  {
+    "id": "soffits_wood",
+    "name": "Soffits - Wood",
+    "category": "Soffits & Drainage",
+    "unit": "sqft",
+    "unit_cost": 25.96,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new painted wood soffit boards; trim; two coats paint",
+    "notes": ""
+  },
+  {
+    "id": "eavestroughs_downspouts",
+    "name": "Eavestroughs and Downspouts",
+    "category": "Soffits & Drainage",
+    "unit": "lnft",
+    "unit_cost": 33.04,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new 5-inch aluminum eavestrough; hangers; end caps; miters; includes downspout (measured as total combined linear footage)",
+    "notes": ""
+  },
+  {
+    "id": "canopy_awning",
+    "name": "Canopy/Awning",
+    "category": "Exterior - Misc",
+    "unit": "sqft",
+    "unit_cost": 377.6,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new structural canopy/awning frame; cladding or fabric cover; drainage; flashing at building",
+    "notes": ""
+  },
+  {
+    "id": "caulking",
+    "name": "Caulking",
+    "category": "Exterior - Misc",
+    "unit": "lnft",
+    "unit_cost": 9.44,
+    "design_life_years": 10,
+    "cost_includes": "Removal of existing failed sealant; backer rod; new polyurethane or silicone sealant",
+    "notes": ""
+  },
+  {
+    "id": "painting_exterior",
+    "name": "Painting - Exterior",
+    "category": "Exterior - Misc",
+    "unit": "sqft",
+    "unit_cost": 4.72,
+    "design_life_years": 10,
+    "cost_includes": "Surface prep; priming; two coats exterior latex or acrylic paint on wood; stucco; or masonry",
+    "notes": ""
+  },
+  {
+    "id": "parging",
+    "name": "Parging",
+    "category": "Exterior - Misc",
+    "unit": "sqft",
+    "unit_cost": 33.04,
+    "design_life_years": 15,
+    "cost_includes": "Removal of failed parging; disposal; surface prep; new parging coat; painting",
+    "notes": ""
+  },
+  {
+    "id": "foundation_waterproofing",
+    "name": "Foundation",
+    "category": "Exterior - Misc",
+    "unit": "sqft",
+    "unit_cost": 141.6,
+    "design_life_years": 30,
+    "cost_includes": "Excavation to footing; removal of failed membrane; disposal; new waterproofing membrane; drainage board; weeping tile inspection; backfill; surface restoration",
+    "notes": ""
+  },
+  {
+    "id": "post_tension_cables",
+    "name": "Post Tension Cables",
+    "category": "Exterior - Misc",
+    "unit": "sqft",
+    "unit_cost": 41.3,
+    "design_life_years": 30,
+    "cost_includes": "Investigation; grouting/repair of corroded anchors; re-stressing where required; protective coatings",
+    "notes": ""
+  },
+  {
+    "id": "lighting_exterior",
+    "name": "Lighting - Exterior",
+    "category": "Exterior - Misc",
+    "unit": "ea",
+    "unit_cost": 1062,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new exterior-rated LED fixture; connection to existing wiring",
+    "notes": ""
+  },
+  {
+    "id": "metal_post_barriers",
+    "name": "Metal Post Barriers",
+    "category": "Exterior - Misc",
+    "unit": "ea",
+    "unit_cost": 413,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new galvanized steel bollard; concrete footing; powder coat",
+    "notes": ""
+  },
+  {
+    "id": "metal_stairs",
+    "name": "Metal Stairs",
+    "category": "Exterior - Misc",
+    "unit": "ea",
+    "unit_cost": 8850,
+    "design_life_years": 30,
+    "cost_includes": "Removal; disposal; new galvanized steel stair assembly; grating treads; handrails; anchoring to structure; priming and painting",
+    "notes": "Per flight."
+  },
+  {
+    "id": "timber_structural_supports",
+    "name": "Timber Wood - Structural Supports",
+    "category": "Exterior - Misc",
+    "unit": "lnft",
+    "unit_cost": 448.4,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new pressure-treated timber or engineered wood structural member; hardware; connections",
+    "notes": ""
+  },
+  {
+    "id": "trim_vinyl",
+    "name": "Trim - Vinyl",
+    "category": "Exterior - Misc",
+    "unit": "lnft",
+    "unit_cost": 16.52,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new vinyl trim; adhesive/mechanical fastening",
+    "notes": ""
+  },
+  {
+    "id": "wood_trellis",
+    "name": "Wood Trellis",
+    "category": "Exterior - Misc",
+    "unit": "sqft",
+    "unit_cost": 64.9,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new pressure-treated or cedar trellis structure; hardware; staining",
+    "notes": ""
+  },
+  {
+    "id": "fireplace",
+    "name": "Fireplace",
+    "category": "Exterior - Misc",
+    "unit": "ea",
+    "unit_cost": 10620,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new gas fireplace insert or wood-burning unit; surround; venting; gas line connection",
+    "notes": ""
+  },
+  {
+    "id": "mailbox_exterior",
+    "name": "Mailbox",
+    "category": "Exterior - Misc",
+    "unit": "ea",
+    "unit_cost": 472,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new Canada Post-approved mailbox bank unit per suite; installation",
+    "notes": "Per suite bank. Exterior installation."
+  },
+  {
+    "id": "common_room_bathroom",
+    "name": "Common Room | Bathroom",
+    "category": "Interior - Common Areas",
+    "unit": "ea",
+    "unit_cost": 43700,
+    "design_life_years": 20,
+    "cost_includes": "Full demolition; disposal; new tile; fixtures; vanity; toilet; accessories; painting; lighting",
+    "notes": "Per bathroom."
+  },
+  {
+    "id": "common_room_dining",
+    "name": "Common Room | Dining Area",
+    "category": "Interior - Common Areas",
+    "unit": "ea",
+    "unit_cost": 28750,
+    "design_life_years": 20,
+    "cost_includes": "Full renovation allowance: flooring; painting; lighting; trim",
+    "notes": ""
+  },
+  {
+    "id": "common_room_furniture",
+    "name": "Common Room | Furniture",
+    "category": "Interior - Common Areas",
+    "unit": "ea",
+    "unit_cost": 20700,
+    "design_life_years": 10,
+    "cost_includes": "Replacement allowance for common room furniture package (seating; tables; accent pieces)",
+    "notes": ""
+  },
+  {
+    "id": "common_room_kitchen",
+    "name": "Common Room | Kitchen",
+    "category": "Interior - Common Areas",
+    "unit": "ea",
+    "unit_cost": 55200,
+    "design_life_years": 20,
+    "cost_includes": "Demolition; disposal; new cabinetry; countertops; backsplash; appliances (range; fridge; dishwasher); flooring; lighting",
+    "notes": ""
+  },
+  {
+    "id": "common_room_library",
+    "name": "Common Room | Library",
+    "category": "Interior - Common Areas",
+    "unit": "ea",
+    "unit_cost": 17250,
+    "design_life_years": 15,
+    "cost_includes": "Built-in shelving; flooring; painting; lighting allowance",
+    "notes": ""
+  },
+  {
+    "id": "common_rooms_improvement",
+    "name": "Common Rooms Improvement",
+    "category": "Interior - Common Areas",
+    "unit": "sqft",
+    "unit_cost": 97.75,
+    "design_life_years": 15,
+    "cost_includes": "General renovation: flooring; painting; trim; lighting. Excludes plumbing and major mechanical.",
+    "notes": ""
+  },
+  {
+    "id": "elevator_interior",
+    "name": "Elevator - Interior",
+    "category": "Interior - Common Areas",
+    "unit": "ea",
+    "unit_cost": 46000,
+    "design_life_years": 15,
+    "cost_includes": "Removal of existing cab finishes; disposal; new stainless or laminate panels; new flooring; lighting; handrail; ceiling; control panel fascia",
+    "notes": "Per cab."
+  },
+  {
+    "id": "exercise_equipment",
+    "name": "Exercise Equipment",
+    "category": "Interior - Common Areas",
+    "unit": "ea",
+    "unit_cost": 34500,
+    "design_life_years": 10,
+    "cost_includes": "Removal; disposal; new exercise equipment package (treadmills; bikes; weight system); installation; mats",
+    "notes": ""
+  },
+  {
+    "id": "flooring_carpet",
+    "name": "Flooring - Carpet",
+    "category": "Interior - Common Areas",
+    "unit": "sqft",
+    "unit_cost": 10.35,
+    "design_life_years": 10,
+    "cost_includes": "Removal; disposal; new commercial-grade carpet; tack strips; underpad; transitions",
+    "notes": ""
+  },
+  {
+    "id": "flooring_rubber",
+    "name": "Flooring - Rubber",
+    "category": "Interior - Common Areas",
+    "unit": "sqft",
+    "unit_cost": 16.1,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; surface prep; new rolled or tile rubber flooring; adhesive",
+    "notes": ""
+  },
+  {
+    "id": "flooring_tile",
+    "name": "Flooring - Tile",
+    "category": "Interior - Common Areas",
+    "unit": "sqft",
+    "unit_cost": 23,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; surface prep; new porcelain or ceramic tile; grout; transitions; waterproofing at wet areas",
+    "notes": ""
+  },
+  {
+    "id": "flooring_vinyl",
+    "name": "Flooring - Vinyl",
+    "category": "Interior - Common Areas",
+    "unit": "sqft",
+    "unit_cost": 13.8,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; surface prep; new luxury vinyl plank or sheet vinyl; adhesive or click-lock",
+    "notes": ""
+  },
+  {
+    "id": "lighting_interior",
+    "name": "Lighting - Interior",
+    "category": "Interior - Common Areas",
+    "unit": "ea",
+    "unit_cost": 402.5,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new LED commercial fixture; connection to existing wiring",
+    "notes": ""
+  },
+  {
+    "id": "lobby_furnishing",
+    "name": "Lobby Furnishing",
+    "category": "Interior - Common Areas",
+    "unit": "ea",
+    "unit_cost": 25300,
+    "design_life_years": 10,
+    "cost_includes": "Replacement allowance for lobby furniture and decor package",
+    "notes": ""
+  },
+  {
+    "id": "mailbox_interior",
+    "name": "Mailbox",
+    "category": "Interior - Common Areas",
+    "unit": "ea",
+    "unit_cost": 460,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new Canada Post-approved mailbox bank; installation",
+    "notes": "Interior installation."
+  },
+  {
+    "id": "painting_interior",
+    "name": "Painting - Interior",
+    "category": "Interior - Common Areas",
+    "unit": "sqft",
+    "unit_cost": 3.45,
+    "design_life_years": 8,
+    "cost_includes": "Surface prep; priming; two coats interior latex paint on walls and ceilings (common corridors; stairwells)",
+    "notes": ""
+  },
+  {
+    "id": "swimming_pool_liner",
+    "name": "Swimming Pool Liner",
+    "category": "Interior - Common Areas",
+    "unit": "ea",
+    "unit_cost": 57500,
+    "design_life_years": 10,
+    "cost_includes": "Draining; removal of existing liner; disposal; new vinyl liner or fiberglass resurfacing; chemical balance; refill",
+    "notes": ""
+  },
+  {
+    "id": "fire_hydrant",
+    "name": "Fire Hydrant",
+    "category": "Fire & Safety",
+    "unit": "ea",
+    "unit_cost": 12000,
+    "design_life_years": 25,
+    "cost_includes": "Isolation; removal; disposal; new dry-barrel hydrant; reconnection; testing; paving restoration",
+    "notes": ""
+  },
+  {
+    "id": "fire_protection",
+    "name": "Fire Protection",
+    "category": "Fire & Safety",
+    "unit": "sqft",
+    "unit_cost": 10.8,
+    "design_life_years": 20,
+    "cost_includes": "New devices; wiring; panel upgrades. General fire alarm upgrade allowance.",
+    "notes": "Per sqft of building."
+  },
+  {
+    "id": "sprinkler_system",
+    "name": "Sprinkler System",
+    "category": "Fire & Safety",
+    "unit": "sqft",
+    "unit_cost": 16.8,
+    "design_life_years": 25,
+    "cost_includes": "Removal of existing heads and distribution piping; disposal; new CPVC or steel distribution; new sprinkler heads; flow testing",
+    "notes": ""
+  },
+  {
+    "id": "air_compressor",
+    "name": "Air Compressor",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 6600,
+    "design_life_years": 15,
+    "cost_includes": "Disconnection; removal; disposal; new air compressor package; reconnection; testing",
+    "notes": ""
+  },
+  {
+    "id": "air_conditioner",
+    "name": "Air Conditioner",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 8400,
+    "design_life_years": 15,
+    "cost_includes": "Disconnection; removal; disposal; new split or packaged AC unit; refrigerant charge; commissioning",
+    "notes": ""
+  },
+  {
+    "id": "annunciator_panel",
+    "name": "Annunciator Panel",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 21600,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new fire alarm annunciator panel; programming; testing; inspection",
+    "notes": ""
+  },
+  {
+    "id": "backflow_preventers",
+    "name": "Backflow Preventers",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 3600,
+    "design_life_years": 15,
+    "cost_includes": "Isolation; removal; disposal; new reduced pressure zone backflow preventer; reconnection; testing; inspection certificate",
+    "notes": ""
+  },
+  {
+    "id": "baseboard_heaters",
+    "name": "Baseboard Heaters",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 840,
+    "design_life_years": 20,
+    "cost_includes": "Disconnection; removal; disposal; new electric baseboard heater; reconnection; thermostat",
+    "notes": ""
+  },
+  {
+    "id": "boiler_controls",
+    "name": "Boiler - Controls",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 18000,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new DDC/BAS control panel; sensors; programming; commissioning",
+    "notes": ""
+  },
+  {
+    "id": "boiler_heating_system",
+    "name": "Boiler - Heating System",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 78000,
+    "design_life_years": 25,
+    "cost_includes": "Disconnection; removal; disposal; new high-efficiency cast iron or firetube boiler; gas connection; venting; controls integration; commissioning",
+    "notes": ""
+  },
+  {
+    "id": "boiler_hot_water",
+    "name": "Boiler - Hot Water Boilers",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 60000,
+    "design_life_years": 20,
+    "cost_includes": "Disconnection; removal; disposal; new hot water boiler; glycol fill; controls; commissioning",
+    "notes": ""
+  },
+  {
+    "id": "boiler_misc",
+    "name": "Boiler - Miscellaneous",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 12000,
+    "design_life_years": 15,
+    "cost_includes": "Ancillary boiler components: expansion tanks; pressure relief valves; isolation valves; gauges. Allowance per boiler system.",
+    "notes": ""
+  },
+  {
+    "id": "carbon_monoxide_detectors",
+    "name": "Carbon Monoxide Detectors",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 480,
+    "design_life_years": 10,
+    "cost_includes": "Removal; disposal; new combination CO/smoke detector; wiring to panel; testing",
+    "notes": ""
+  },
+  {
+    "id": "electrical_breaker_panel",
+    "name": "Electrical - Breaker Panel",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 6600,
+    "design_life_years": 25,
+    "cost_includes": "Disconnection; removal; disposal; new breaker panel; breakers; labeling; ESA inspection",
+    "notes": ""
+  },
+  {
+    "id": "electrical_power_distribution",
+    "name": "Electrical - Power Distribution",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 48000,
+    "design_life_years": 25,
+    "cost_includes": "Replacement of main electrical distribution equipment: switchgear; bus duct; metering. Allowance per building service.",
+    "notes": ""
+  },
+  {
+    "id": "electrical_system",
+    "name": "Electrical System",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 66000,
+    "design_life_years": 25,
+    "cost_includes": "Comprehensive electrical system upgrade: wiring; distribution; panels; lighting circuits. Allowance per building.",
+    "notes": ""
+  },
+  {
+    "id": "electric_car_charger",
+    "name": "Electric Car Charger",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 4800,
+    "design_life_years": 15,
+    "cost_includes": "Trenching (if required); conduit; 240V outlet; Level 2 EVSE unit; electrical panel circuit",
+    "notes": ""
+  },
+  {
+    "id": "electric_heaters",
+    "name": "Electric Heaters",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 1680,
+    "design_life_years": 20,
+    "cost_includes": "Disconnection; removal; disposal; new electric unit heater (garage or utility); reconnection",
+    "notes": ""
+  },
+  {
+    "id": "elevator_mechanism",
+    "name": "Elevator - Mechanism",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 156000,
+    "design_life_years": 25,
+    "cost_includes": "Removal of existing drive; cab; cables; disposal; new hydraulic or traction elevator drive; controls; cab; safety certification",
+    "notes": ""
+  },
+  {
+    "id": "exhaust_fans",
+    "name": "Exhaust Fans",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 3600,
+    "design_life_years": 15,
+    "cost_includes": "Disconnection; removal; disposal; new inline or ceiling exhaust fan; ductwork connections; damper",
+    "notes": ""
+  },
+  {
+    "id": "expansion_tank",
+    "name": "Expansion Tank",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 3000,
+    "design_life_years": 15,
+    "cost_includes": "Isolation; removal; disposal; new bladder-type expansion tank; reconnection; charging",
+    "notes": ""
+  },
+  {
+    "id": "fob_system",
+    "name": "FOB System",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 21600,
+    "design_life_years": 10,
+    "cost_includes": "Removal of existing hardware; new FOB/key card readers at all access points; new server/controller; programming; fobs",
+    "notes": ""
+  },
+  {
+    "id": "forced_air_furnace",
+    "name": "Forced Air Furnace",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 11400,
+    "design_life_years": 20,
+    "cost_includes": "Disconnection; removal; disposal; new high-efficiency gas forced air furnace; venting; gas connection; controls; commissioning",
+    "notes": ""
+  },
+  {
+    "id": "garage_opener",
+    "name": "Garage Opener",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 2640,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new commercial garage door operator; safety sensors; remotes",
+    "notes": ""
+  },
+  {
+    "id": "heating_units",
+    "name": "Heating Units",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 6600,
+    "design_life_years": 20,
+    "cost_includes": "Disconnection; removal; disposal; new hydronic or electric unit heater; reconnection; commissioning",
+    "notes": ""
+  },
+  {
+    "id": "hot_water_heaters",
+    "name": "Hot Water Heaters",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 4800,
+    "design_life_years": 15,
+    "cost_includes": "Disconnection; removal; disposal; new 40-80 gal natural gas or electric water heater; reconnection; venting; testing",
+    "notes": ""
+  },
+  {
+    "id": "hot_water_storage_tanks",
+    "name": "Hot Water Storage Tanks",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 10800,
+    "design_life_years": 20,
+    "cost_includes": "Disconnection; removal; disposal; new indirect or direct storage tank; insulation; connections",
+    "notes": ""
+  },
+  {
+    "id": "intercom",
+    "name": "Intercom",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 24000,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new video intercom system; panels at entries; suite stations; wiring; programming",
+    "notes": "Per building system."
+  },
+  {
+    "id": "life_safety_systems",
+    "name": "Life Safety Systems",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 33600,
+    "design_life_years": 15,
+    "cost_includes": "Comprehensive upgrade: fire alarm; emergency lighting; exit signs; PA system. Allowance per building.",
+    "notes": ""
+  },
+  {
+    "id": "make_up_air",
+    "name": "Make Up Air",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 48000,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new rooftop makeup air unit (heating/cooling coil; dampers); ductwork connections; commissioning",
+    "notes": ""
+  },
+  {
+    "id": "make_up_air_hallways",
+    "name": "Make Up Air - Hallways",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 33600,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new corridor MUA unit; distribution ductwork; commissioning",
+    "notes": ""
+  },
+  {
+    "id": "make_up_air_parkade",
+    "name": "Make Up Air - Parkade",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 60000,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new parkade dedicated MUA unit (CO sensing; high CFM); commissioning",
+    "notes": ""
+  },
+  {
+    "id": "mechanical_equipment_screens",
+    "name": "Mechanical Equipment Screens",
+    "category": "Mechanical & Electrical",
+    "unit": "sqft",
+    "unit_cost": 114,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new louvered aluminum or metal screen panels; supporting frame",
+    "notes": ""
+  },
+  {
+    "id": "plate_heat_exchangers",
+    "name": "Plate Heat Exchangers",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 26400,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new brazed or gasketed plate heat exchanger; connections; pressure testing",
+    "notes": ""
+  },
+  {
+    "id": "plumbing_distribution_pipes",
+    "name": "Plumbing/Heating - Distribution Pipes",
+    "category": "Mechanical & Electrical",
+    "unit": "lnft",
+    "unit_cost": 114,
+    "design_life_years": 30,
+    "cost_includes": "Removal; disposal; new copper or PEX distribution piping; insulation; hangers; fittings. Assumes exposed or accessible location.",
+    "notes": ""
+  },
+  {
+    "id": "plumbing_heating_systems",
+    "name": "Plumbing and Heating Systems - Pumps/Valves/Heaters",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 16800,
+    "design_life_years": 15,
+    "cost_includes": "Disconnection; removal; disposal; new pump-valve-heater package per system; reconnection; commissioning",
+    "notes": ""
+  },
+  {
+    "id": "pumps",
+    "name": "Pumps",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 8400,
+    "design_life_years": 15,
+    "cost_includes": "Disconnection; removal; disposal; new inline or end-suction pump; motor; coupling; reconnection; commissioning",
+    "notes": ""
+  },
+  {
+    "id": "pumps_sump",
+    "name": "Pumps - Sump",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 4800,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new submersible sump pump with float switch; discharge piping; check valve",
+    "notes": ""
+  },
+  {
+    "id": "rooftop_units",
+    "name": "Rooftop Units",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 33600,
+    "design_life_years": 20,
+    "cost_includes": "Disconnection; removal; disposal; new packaged rooftop HVAC unit; curb adapter; ductwork connections; commissioning",
+    "notes": ""
+  },
+  {
+    "id": "security_system",
+    "name": "Security System",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 24000,
+    "design_life_years": 10,
+    "cost_includes": "Removal; disposal; new IP camera system; DVR/NVR; monitors; wiring; programming. Allowance per building.",
+    "notes": ""
+  },
+  {
+    "id": "snow_melt_parkade",
+    "name": "Snow Melt System Parkade",
+    "category": "Mechanical & Electrical",
+    "unit": "sqft",
+    "unit_cost": 48,
+    "design_life_years": 25,
+    "cost_includes": "Removal of failed system; new hydronic tubing embedded in topping; boiler connections; controls",
+    "notes": ""
+  },
+  {
+    "id": "solar_panels",
+    "name": "Solar Panels",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 60000,
+    "design_life_years": 25,
+    "cost_includes": "Structural assessment; new racking system; panels (~20kW array); inverter; electrical connection; utility interconnection",
+    "notes": "ea = one complete array (~20kW)."
+  },
+  {
+    "id": "ventilation_exhaust_fans",
+    "name": "Ventilation - Exhaust Fans",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 3600,
+    "design_life_years": 15,
+    "cost_includes": "Disconnection; removal; disposal; new exhaust fan; ductwork to exterior; backdraft damper; grille",
+    "notes": ""
+  },
+  {
+    "id": "water_softener",
+    "name": "Water Softener",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 6600,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new twin-tank commercial water softener; brine tank; connections; programming",
+    "notes": ""
+  },
+  {
+    "id": "zone_valves",
+    "name": "Zone Valves",
+    "category": "Mechanical & Electrical",
+    "unit": "ea",
+    "unit_cost": 1680,
+    "design_life_years": 15,
+    "cost_includes": "Isolation; removal; disposal; new motorized zone valve; actuator; controls wiring",
+    "notes": ""
+  },
+  {
+    "id": "lighting_parkade",
+    "name": "Lighting - Parkade",
+    "category": "Parkade",
+    "unit": "ea",
+    "unit_cost": 600,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new LED vapor-proof or high-bay fixture; connection to existing wiring",
+    "notes": ""
+  },
+  {
+    "id": "painting_parkade",
+    "name": "Painting - Parkade",
+    "category": "Parkade",
+    "unit": "sqft",
+    "unit_cost": 4.02,
+    "design_life_years": 8,
+    "cost_includes": "Cleaning; surface prep; new epoxy paint or traffic coating; line painting",
+    "notes": ""
+  },
+  {
+    "id": "parkade_concrete",
+    "name": "Parkade Concrete",
+    "category": "Parkade",
+    "unit": "sqft",
+    "unit_cost": 47.2,
+    "design_life_years": 25,
+    "cost_includes": "Crack routing and sealing; spall repair; patching; penetrating sealer. Assumes moderate deterioration.",
+    "notes": ""
+  },
+  {
+    "id": "parkade_roof_waterproofing",
+    "name": "Parkade Roof Waterproofing",
+    "category": "Parkade",
+    "unit": "sqft",
+    "unit_cost": 37.76,
+    "design_life_years": 20,
+    "cost_includes": "Removal of existing waterproofing and protection board; disposal; surface prep; new membrane system; protection board; drainage",
+    "notes": ""
+  },
+  {
+    "id": "parkade_suspended_slab",
+    "name": "Parkade Suspended Slab",
+    "category": "Parkade",
+    "unit": "sqft",
+    "unit_cost": 88.5,
+    "design_life_years": 30,
+    "cost_includes": "Demolition of failed slab panels; shoring; disposal; new reinforced concrete slab; waterproofing; surface hardener",
+    "notes": ""
+  },
+  {
+    "id": "storage_lockers",
+    "name": "Storage Lockers",
+    "category": "Parkade",
+    "unit": "ea",
+    "unit_cost": 2530,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new wire mesh or metal locker unit with locking door; anchoring to floor and wall",
+    "notes": ""
+  },
+  {
+    "id": "asphalt",
+    "name": "Asphalt",
+    "category": "Site - Hard",
+    "unit": "sqft",
+    "unit_cost": 10.62,
+    "design_life_years": 20,
+    "cost_includes": "Removal of existing; disposal; grading; compacted granular base (if required); new asphalt (2 lifts); line painting",
+    "notes": ""
+  },
+  {
+    "id": "automatic_gate_operator",
+    "name": "Automatic Gate Operator",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 11400,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new swing or slide gate operator; access controls; safety loops; testing",
+    "notes": ""
+  },
+  {
+    "id": "carports",
+    "name": "Carports",
+    "category": "Site - Hard",
+    "unit": "sqft",
+    "unit_cost": 59,
+    "design_life_years": 20,
+    "cost_includes": "Demolition of existing structure (if applicable); disposal; new steel post and beam carport structure; metal roofing; footings",
+    "notes": ""
+  },
+  {
+    "id": "concrete",
+    "name": "Concrete",
+    "category": "Site - Hard",
+    "unit": "sqft",
+    "unit_cost": 28.32,
+    "design_life_years": 30,
+    "cost_includes": "Removal; disposal; base prep; new reinforced concrete flatwork; curing",
+    "notes": "General flatwork."
+  },
+  {
+    "id": "concrete_carstop",
+    "name": "Concrete Carstop",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 330.4,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new precast concrete wheel stop; anchoring",
+    "notes": ""
+  },
+  {
+    "id": "concrete_curb_rehab",
+    "name": "Concrete Curb Rehabilitation",
+    "category": "Site - Hard",
+    "unit": "lnft",
+    "unit_cost": 88.5,
+    "design_life_years": 25,
+    "cost_includes": "Removal of failed curb sections; disposal; new formed concrete curb; tie-in to adjacent pavement",
+    "notes": ""
+  },
+  {
+    "id": "concrete_sidewalks",
+    "name": "Concrete Sidewalks",
+    "category": "Site - Hard",
+    "unit": "sqft",
+    "unit_cost": 28.32,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new reinforced concrete sidewalk (4-inch thick); base prep; curing",
+    "notes": ""
+  },
+  {
+    "id": "concrete_stairs",
+    "name": "Concrete Stairs",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 6490,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new formed and poured concrete stairs (3-5 risers); non-slip nosing; handrail connection",
+    "notes": "Per flight."
+  },
+  {
+    "id": "concrete_walkway",
+    "name": "Concrete Walkway",
+    "category": "Site - Hard",
+    "unit": "sqft",
+    "unit_cost": 28.32,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new reinforced concrete walkway; base prep; curing",
+    "notes": ""
+  },
+  {
+    "id": "diesel_generator",
+    "name": "Diesel Generator",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 78000,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new standby diesel generator (~100kW); automatic transfer switch; fuel tank; installation; load testing; permit",
+    "notes": ""
+  },
+  {
+    "id": "electrical_gas_water",
+    "name": "Electrical/Gas/Water",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 21600,
+    "design_life_years": 30,
+    "cost_includes": "Service lateral repair/replacement: trenching; new conduit/pipe; reconnection; utility coordination. Allowance per service.",
+    "notes": ""
+  },
+  {
+    "id": "electrical_water",
+    "name": "Electrical/Water",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 18000,
+    "design_life_years": 30,
+    "cost_includes": "Service lateral repair/replacement without gas component: trenching; new conduit/pipe; reconnection; utility coordination.",
+    "notes": ""
+  },
+  {
+    "id": "lighting_light_standards",
+    "name": "Lighting - Light Standards",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 6600,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new direct-buried or breakaway pole; LED fixture; footing; wiring to service",
+    "notes": ""
+  },
+  {
+    "id": "parking_lot_outlets",
+    "name": "Parking Lot Outlets",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 1680,
+    "design_life_years": 15,
+    "cost_includes": "Trenching (if required); new duplex 120V outlet on pedestal or wall mount; weatherproof cover; circuit connection",
+    "notes": ""
+  },
+  {
+    "id": "playground",
+    "name": "Playground",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 47200,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new modular playground structure; safety surface (engineered wood fiber or rubber mulch); installation. Standard size.",
+    "notes": ""
+  },
+  {
+    "id": "property_signage",
+    "name": "Property Signage",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 3540,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new illuminated or non-illuminated property ID sign; post; footing; electrical if illuminated",
+    "notes": ""
+  },
+  {
+    "id": "sewer_system",
+    "name": "Sewer System",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 33600,
+    "design_life_years": 30,
+    "cost_includes": "CCTV inspection; spot repairs or full sanitary/storm lateral replacement; excavation; new PVC pipe; backfill; surface restoration. Allowance per building.",
+    "notes": ""
+  },
+  {
+    "id": "shared_facilities",
+    "name": "Shared Facilities",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 63250,
+    "design_life_years": 20,
+    "cost_includes": "General renovation allowance for shared amenity facilities (pool deck; clubhouse; etc.). Scope-dependent; verify per project.",
+    "notes": ""
+  },
+  {
+    "id": "shed",
+    "name": "Shed",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 11210,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new wood or metal framed storage shed; concrete pad; painting; basic electrical",
+    "notes": ""
+  },
+  {
+    "id": "underground_utilities",
+    "name": "Underground Utilities",
+    "category": "Site - Hard",
+    "unit": "lnft",
+    "unit_cost": 168,
+    "design_life_years": 30,
+    "cost_includes": "Excavation; removal of failed pipe or conduit; disposal; new PVC or HDPE pipe/conduit; backfill; compaction; surface restoration",
+    "notes": ""
+  },
+  {
+    "id": "wood_steps",
+    "name": "Wood Steps",
+    "category": "Site - Hard",
+    "unit": "ea",
+    "unit_cost": 2950,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new pressure-treated wood stair assembly (3-4 risers); stringers; treads; handrail",
+    "notes": ""
+  },
+  {
+    "id": "fence_chain_link",
+    "name": "Fence - Chain Link",
+    "category": "Site - Soft & Fencing",
+    "unit": "lnft",
+    "unit_cost": 59,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new galvanized chain link fence (6-ft height); posts; tension wire; top rail; concrete footings",
+    "notes": ""
+  },
+  {
+    "id": "fence_iron",
+    "name": "Fence - Iron",
+    "category": "Site - Soft & Fencing",
+    "unit": "lnft",
+    "unit_cost": 159.3,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new ornamental iron fence; posts; concrete footings; primer and paint",
+    "notes": ""
+  },
+  {
+    "id": "fence_stucco",
+    "name": "Fence - Stucco",
+    "category": "Site - Soft & Fencing",
+    "unit": "lnft",
+    "unit_cost": 112.1,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new CMU or wood-framed stucco fence; wire lath; stucco; paint",
+    "notes": ""
+  },
+  {
+    "id": "fence_vinyl",
+    "name": "Fence - Vinyl",
+    "category": "Site - Soft & Fencing",
+    "unit": "lnft",
+    "unit_cost": 70.8,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new vinyl privacy or rail fence (6-ft height); posts; concrete footings",
+    "notes": ""
+  },
+  {
+    "id": "fence_wood",
+    "name": "Fence - Wood",
+    "category": "Site - Soft & Fencing",
+    "unit": "lnft",
+    "unit_cost": 70.8,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new pressure-treated wood privacy fence (6-ft height); posts; concrete footings; staining",
+    "notes": ""
+  },
+  {
+    "id": "garbage_bins",
+    "name": "Garbage Bins",
+    "category": "Site - Soft & Fencing",
+    "unit": "ea",
+    "unit_cost": 1770,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new 2-4 yard commercial dumpster with lids and wheels",
+    "notes": ""
+  },
+  {
+    "id": "garbage_shed",
+    "name": "Garbage Shed",
+    "category": "Site - Soft & Fencing",
+    "unit": "ea",
+    "unit_cost": 11210,
+    "design_life_years": 20,
+    "cost_includes": "Demolition; disposal; new wood or metal framed garbage enclosure with gates; concrete pad; painting",
+    "notes": ""
+  },
+  {
+    "id": "landscaping",
+    "name": "Landscaping",
+    "category": "Site - Soft & Fencing",
+    "unit": "sqft",
+    "unit_cost": 10.62,
+    "design_life_years": 10,
+    "cost_includes": "Removal of failed plants/sod; disposal; new topsoil; sodding or seeding; basic plantings",
+    "notes": ""
+  },
+  {
+    "id": "landscaping_irrigation",
+    "name": "Landscaping - Irrigation System",
+    "category": "Site - Soft & Fencing",
+    "unit": "sqft",
+    "unit_cost": 7.08,
+    "design_life_years": 15,
+    "cost_includes": "Removal of failed components; new PVC distribution piping; rotary and spray heads; backflow preventer; controller",
+    "notes": ""
+  },
+  {
+    "id": "landscaping_paving_stones",
+    "name": "Landscaping - Paving Stones",
+    "category": "Site - Soft & Fencing",
+    "unit": "sqft",
+    "unit_cost": 29.5,
+    "design_life_years": 20,
+    "cost_includes": "Removal; disposal; new compacted base; concrete or clay paving stones; sand setting bed; edge restraints",
+    "notes": ""
+  },
+  {
+    "id": "lift_station_building",
+    "name": "Lift Station Building",
+    "category": "Site - Soft & Fencing",
+    "unit": "ea",
+    "unit_cost": 66000,
+    "design_life_years": 30,
+    "cost_includes": "Demolition; disposal; new prefab or CMU lift station building; electrical; ventilation",
+    "notes": ""
+  },
+  {
+    "id": "lift_station_pumps",
+    "name": "Lift Station Pumps",
+    "category": "Site - Soft & Fencing",
+    "unit": "ea",
+    "unit_cost": 16800,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new sewage lift station submersible pump; guide rails; connections; testing",
+    "notes": ""
+  },
+  {
+    "id": "retaining_walls",
+    "name": "Retaining Walls",
+    "category": "Site - Soft & Fencing",
+    "unit": "lnft",
+    "unit_cost": 236,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new retaining wall (assumes 4-ft height); drainage behind wall; backfill; surface restoration",
+    "notes": "+25% per additional foot of height."
+  },
+  {
+    "id": "retaining_walls_concrete",
+    "name": "Retaining Walls - Concrete",
+    "category": "Site - Soft & Fencing",
+    "unit": "lnft",
+    "unit_cost": 295,
+    "design_life_years": 30,
+    "cost_includes": "Removal; disposal; new formed poured concrete retaining wall (4-ft height); waterproofing face; drainage; backfill",
+    "notes": ""
+  },
+  {
+    "id": "retaining_walls_manufactured_stone",
+    "name": "Retaining Walls - Manufactured Stone",
+    "category": "Site - Soft & Fencing",
+    "unit": "lnft",
+    "unit_cost": 377.6,
+    "design_life_years": 25,
+    "cost_includes": "Removal; disposal; new segmental retaining wall block system; geogrid reinforcement; drainage; backfill",
+    "notes": ""
+  },
+  {
+    "id": "retaining_walls_wood",
+    "name": "Retaining Walls - Wood",
+    "category": "Site - Soft & Fencing",
+    "unit": "lnft",
+    "unit_cost": 153.4,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new pressure-treated timber retaining wall (4-ft height); deadmen; drainage; backfill",
+    "notes": ""
+  },
+  {
+    "id": "trim_wood",
+    "name": "Trim - Wood",
+    "category": "Site - Soft & Fencing",
+    "unit": "lnft",
+    "unit_cost": 23.6,
+    "design_life_years": 15,
+    "cost_includes": "Removal; disposal; new wood trim/fascia board; caulking; priming; two coats paint",
+    "notes": ""
+  },
+  {
+    "id": "contingency_fund",
+    "name": "Contingency Fund",
+    "category": "Administrative",
+    "unit": "ea",
+    "unit_cost": 0,
+    "design_life_years": null,
+    "cost_includes": "Percentage of total construction cost. Typically 5-10%. Applied at project level.",
+    "notes": "Not a depreciating asset. Unit cost is 0; apply as percentage at estimate level."
+  },
+  {
+    "id": "depreciation_report",
+    "name": "Depreciation Report",
+    "category": "Administrative",
+    "unit": "ea",
+    "unit_cost": 4320,
+    "design_life_years": null,
+    "cost_includes": "Professional depreciation report preparation for strata/condo corporation",
+    "notes": "Not a depreciating asset. BC strata market."
+  },
+  {
+    "id": "reserve_fund_study",
+    "name": "Reserve Fund Study",
+    "category": "Administrative",
+    "unit": "ea",
+    "unit_cost": 6480,
+    "design_life_years": null,
+    "cost_includes": "Professional reserve fund study: site visit; full component inventory; 30-year financial projection",
+    "notes": "Not a depreciating asset. Alberta market."
+  },
+  {
+    "id": "professional_services",
+    "name": "Professional Services",
+    "category": "Administrative",
+    "unit": "ea",
+    "unit_cost": 6480,
+    "design_life_years": null,
+    "cost_includes": "Engineering/architectural fees for design and project management per capital repair project. Adjust per project complexity.",
+    "notes": "Not a depreciating asset. Typically 8-15% of construction cost; this is a per-project allowance."
+  }
+]

@@ -81,18 +81,22 @@ OUTPUT_CSV = os.path.join(PROJECT_DIR, "stress_test_kpi_summary.csv")
 
 def sample_life_multipliers(num_trials: int,
                             num_components: int,
-                            rng: np.random.Generator) -> np.ndarray:
+                            rng: np.random.Generator,
+                            life_shock_mean: float = LIFE_SHOCK_MEAN,
+                            life_shock_sigma: float = LIFE_SHOCK_SIGMA) -> np.ndarray:
     """Per-trial, per-component life multiplier from Normal(mean, sigma)."""
-    samples = rng.normal(LIFE_SHOCK_MEAN, LIFE_SHOCK_SIGMA,
+    samples = rng.normal(life_shock_mean, life_shock_sigma,
                          size=(num_trials, num_components))
     return np.maximum(MIN_LIFE_MULTIPLIER, samples)
 
 
 def sample_cost_multipliers(num_trials: int,
                             num_components: int,
-                            rng: np.random.Generator) -> np.ndarray:
+                            rng: np.random.Generator,
+                            cost_shock_mean: float = COST_SHOCK_MEAN,
+                            cost_shock_sigma: float = COST_SHOCK_SIGMA) -> np.ndarray:
     """Per-trial, per-component cost multiplier from Lognormal(mean, sigma)."""
-    log_p = calc.calculate_lognormal_params(COST_SHOCK_MEAN, COST_SHOCK_SIGMA)
+    log_p = calc.calculate_lognormal_params(cost_shock_mean, cost_shock_sigma)
     normal = rng.normal(log_p["mu"], log_p["sigma"],
                         size=(num_trials, num_components))
     samples = np.exp(normal)
@@ -241,13 +245,19 @@ def run_stress_test(components: List[Dict[str, Any]],
                     annual_contribution: float = ANNUAL_CONTRIBUTION,
                     num_units: int = NUM_UNITS,
                     horizon: int = FORECAST_HORIZON_YEARS,
-                    seed: int = 42) -> Dict[str, Any]:
+                    seed: int = 42,
+                    life_shock_mean: float = LIFE_SHOCK_MEAN,
+                    life_shock_sigma: float = LIFE_SHOCK_SIGMA,
+                    cost_shock_mean: float = COST_SHOCK_MEAN,
+                    cost_shock_sigma: float = COST_SHOCK_SIGMA) -> Dict[str, Any]:
     rng = np.random.default_rng(seed)
     n = len(components)
 
     # Two tracks per component → 2n columns of multipliers
-    life_mults_all = sample_life_multipliers(num_trials, 2 * n, rng)
-    cost_mults_all = sample_cost_multipliers(num_trials, 2 * n, rng)
+    life_mults_all = sample_life_multipliers(num_trials, 2 * n, rng,
+                                             life_shock_mean, life_shock_sigma)
+    cost_mults_all = sample_cost_multipliers(num_trials, 2 * n, rng,
+                                             cost_shock_mean, cost_shock_sigma)
 
     a_1_5 = np.zeros(num_trials)
     a_6_10 = np.zeros(num_trials)
@@ -283,10 +293,10 @@ def run_stress_test(components: List[Dict[str, Any]],
             "annual_contribution_per_unit": annual_contribution / max(1, num_units),
             "forecast_horizon_years": horizon,
             "num_trials": num_trials,
-            "life_shock_mean": LIFE_SHOCK_MEAN,
-            "life_shock_sigma": LIFE_SHOCK_SIGMA,
-            "cost_shock_mean": COST_SHOCK_MEAN,
-            "cost_shock_sigma": COST_SHOCK_SIGMA,
+            "life_shock_mean": life_shock_mean,
+            "life_shock_sigma": life_shock_sigma,
+            "cost_shock_mean": cost_shock_mean,
+            "cost_shock_sigma": cost_shock_sigma,
         },
         "kpis_total": {
             "assessment_yr_1_5": percentile_summary(a_1_5),

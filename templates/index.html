@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RFS Stress Test</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background: #f4f6f9; }
+    .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .card-header { background: #1a3a5c; color: #fff; border-radius: 12px 12px 0 0 !important; }
+    .section-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+                     letter-spacing: 0.06em; color: #6c757d; margin-bottom: 0.5rem; }
+    .btn-primary { background: #1a3a5c; border-color: #1a3a5c; }
+    .btn-primary:hover { background: #15304d; border-color: #15304d; }
+    #loading-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(255,255,255,0.88); z-index: 9999;
+      flex-direction: column; align-items: center; justify-content: center;
+    }
+    #loading-overlay .spinner-border { width: 3rem; height: 3rem; color: #1a3a5c; }
+    #loading-overlay p { margin-top: 1rem; font-size: 1.1rem; color: #1a3a5c; font-weight: 500; }
+    #loading-overlay small { color: #6c757d; }
+  </style>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="spinner-border" role="status"></div>
+  <p>Running stress test…</p>
+  <small>2,000 trials × 30 years — usually 5–15 seconds.</small>
+</div>
+
+<div class="container py-5" style="max-width: 760px;">
+
+  <div class="text-center mb-4">
+    <h2 class="fw-bold" style="color:#1a3a5c;">Reserve Fund Study — Stress Test</h2>
+    <p class="text-muted">Upload a reserve study CSV and configure shock parameters to model special assessment risk.</p>
+  </div>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="alert alert-danger">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="card">
+    <div class="card-header py-3"><h5 class="mb-0">New Stress Test</h5></div>
+    <div class="card-body p-4">
+
+      <form action="/run" method="POST" enctype="multipart/form-data" id="stress-form">
+
+        <!-- Reserve Study -->
+        <p class="section-label">Reserve Study</p>
+        <div class="mb-4">
+          <label class="form-label">Component CSV <span class="text-danger">*</span></label>
+          <input type="file" class="form-control" name="reserve_csv" accept=".csv" required />
+          <div class="form-text">Export the component sheet from your reserve study workbook as CSV. Required columns: Component, Replacement Budget, Design Life, Current Age, Replacement Year, Current Replacement Cost, Maintenance Budget, Maintenance Life Cycle, Maintenance Year, Current Maintenance Cost.</div>
+        </div>
+
+        <!-- Property Parameters -->
+        <p class="section-label">Property Parameters</p>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label">Number of Units <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="num_units" placeholder="e.g. 24" min="1" step="1" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Opening Reserve Balance ($) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="starting_reserve" placeholder="e.g. 125000" min="0" step="1" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Annual Contribution ($) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="annual_contribution" placeholder="e.g. 48000" min="0" step="1" required />
+          </div>
+        </div>
+
+        <!-- Shock Parameters -->
+        <p class="section-label">Shock Parameters</p>
+        <p class="text-muted small mb-3">Life multiplier &lt;1 shortens design life; cost multiplier &gt;1 increases costs. Defaults model a moderate stress scenario (20% shorter life, 30% higher costs).</p>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-3">
+            <label class="form-label">Life Shock Mean</label>
+            <input type="number" class="form-control" name="life_shock_mean" value="0.80" min="0.1" max="2.0" step="0.01" />
+            <div class="form-text">e.g. 0.80 = 20% shorter life</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Life Shock Std Dev</label>
+            <input type="number" class="form-control" name="life_shock_sigma" value="0.10" min="0.01" max="1.0" step="0.01" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Cost Shock Mean</label>
+            <input type="number" class="form-control" name="cost_shock_mean" value="1.30" min="0.5" max="5.0" step="0.01" />
+            <div class="form-text">e.g. 1.30 = 30% cost increase</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Cost Shock Std Dev</label>
+            <input type="number" class="form-control" name="cost_shock_sigma" value="0.15" min="0.01" max="1.0" step="0.01" />
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label">Number of Trials</label>
+            <input type="number" class="form-control" name="num_trials" value="2000" min="100" max="10000" step="100" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Forecast Horizon (years)</label>
+            <input type="number" class="form-control" name="horizon" value="30" min="10" max="50" step="1" />
+          </div>
+        </div>
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary btn-lg">Run Stress Test</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('stress-form').addEventListener('submit', function () {
+    document.getElementById('loading-overlay').style.display = 'flex';
+  });
+</script>
+
+</body>
+</html>

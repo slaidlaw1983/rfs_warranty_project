@@ -23,6 +23,16 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/download-template")
+def download_template():
+    return send_file(
+        os.path.join(os.path.dirname(__file__), "static", "reserve_study_template.csv"),
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name="reserve_study_template.csv",
+    )
+
+
 @app.route("/run", methods=["POST"])
 def run():
     reserve_csv = request.files.get("reserve_csv")

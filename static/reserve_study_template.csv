@@ -1,0 +1,23 @@
+Component,Replacement Budget,Design Life,Current Age,Replacement Year,Current Replacement Cost,Maintenance Budget,Maintenance Life Cycle,Remaining Maintenance Life,Maintenance Year,Current Maintenance Cost
+Roof - Asphalt Shingle,Yes,25,5,20,45000,No,,,,
+Eavestroughs and Downspouts,Yes,30,5,25,8500,No,,,,
+Windows,Yes,30,5,25,52000,No,,,,
+Exterior Doors - Swing,Yes,30,10,20,18000,No,,,,
+Exterior Doors - Sliding,Yes,20,10,10,9500,No,,,,
+Siding - Stucco,Yes,40,10,30,75000,Yes,12,2,2,8000
+Soffits - Aluminum,Yes,25,5,20,9200,No,,,,
+Balcony Membrane,Yes,15,3,12,12000,No,,,,
+Balcony Railings - Aluminum,Yes,25,5,20,14000,No,,,,
+Asphalt,Yes,20,8,12,38000,No,,,,
+Concrete Sidewalks,No,,,,,Yes,10,2,2,6000
+Landscaping,No,,,,,Yes,5,1,1,3500
+Fence - Wood,Yes,15,5,10,8500,Yes,5,2,2,2000
+Exterior Painting,No,,,,,Yes,8,3,3,9000
+Lighting - Exterior,Yes,15,5,10,4500,No,,,,
+Boiler - Heating System,Yes,25,10,15,65000,Yes,5,1,1,4000
+Hot Water Heaters,Yes,15,5,10,8000,No,,,,
+Elevator - Mechanism,Yes,25,15,10,130000,No,,,,
+Intercom,Yes,15,8,7,20000,No,,,,
+Underground Utilities,No,,,,,Yes,15,5,5,12000
+Reserve Fund Study,No,,,,,Yes,5,2,2,5000
+Foundation,No,,,,,No,,,,

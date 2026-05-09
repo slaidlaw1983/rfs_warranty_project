@@ -154,6 +154,87 @@
     </div>
   </div>
 
+  <!-- Reserve Balance KPI Tables -->
+  {% set bal_labels = [
+    ("min_balance_yr_1_5",  "Minimum Balance — Years 1–5"),
+    ("min_balance_yr_6_10", "Minimum Balance — Years 6–10"),
+    ("min_balance_30yr",    "Minimum Balance — 30yr"),
+    ("balance_at_yr10",     "Reserve Balance at Year 10"),
+    ("balance_at_yr30",     "Reserve Balance at Year 30")
+  ] %}
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header py-2"><h6 class="mb-0">Reserve Balance — Total ($)</h6></div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 kpi-table">
+              <thead>
+                <tr>
+                  <th>KPI</th>
+                  <th class="text-end">Mean</th><th class="text-end">P25</th>
+                  <th class="text-end">P50</th><th class="text-end">P75</th>
+                  <th class="text-end">P90</th><th class="text-end">P95</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for key, label in bal_labels %}
+                  {% if key in summary.kpis_balance_total %}
+                  {% set s = summary.kpis_balance_total[key] %}
+                  <tr>
+                    <td class="kpi-label">{{ label }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.mean) }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.p25) }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.p50) }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.p75) }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.p90) }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.p95) }}</td>
+                  </tr>
+                  {% endif %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header py-2"><h6 class="mb-0">Reserve Balance — Per Unit ($)</h6></div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 kpi-table">
+              <thead>
+                <tr>
+                  <th>KPI</th>
+                  <th class="text-end">Mean</th><th class="text-end">P25</th>
+                  <th class="text-end">P50</th><th class="text-end">P75</th>
+                  <th class="text-end">P90</th><th class="text-end">P95</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for key, label in bal_labels %}
+                  {% if key in summary.kpis_balance_per_unit %}
+                  {% set s = summary.kpis_balance_per_unit[key] %}
+                  <tr>
+                    <td class="kpi-label">{{ label }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.mean) }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.p25) }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.p50) }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.p75) }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.p90) }}</td>
+                    <td class="text-end">${{ "{:,.0f}".format(s.p95) }}</td>
+                  </tr>
+                  {% endif %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Risk Indicators -->
   <div class="card">
     <div class="card-header green py-2"><h6 class="mb-0 text-white">Risk Indicators</h6></div>
@@ -183,6 +264,32 @@
             <td class="fw-semibold">{{ "{:.1%}".format(summary.probability_of_assessment["30yr"]) }}</td>
             <td class="text-muted">Components in simulation</td>
             <td class="fw-semibold pe-3">{{ summary.components_loaded }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted ps-3">% of 30yr expenditure in yrs 1–5</td>
+            <td class="fw-semibold">{{ "{:.1%}".format(summary.expenditure_distribution.pct_outflow_yr_1_5) }}</td>
+            <td class="text-muted">% of 30yr expenditure in yrs 6–10</td>
+            <td class="fw-semibold pe-3">{{ "{:.1%}".format(summary.expenditure_distribution.pct_outflow_yr_6_10) }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted ps-3">Median assessment years (30yr)</td>
+            <td class="fw-semibold">{{ summary.assessment_frequency.n_assessment_years.p50 | round(0) | int }} yrs</td>
+            <td class="text-muted">P90 assessment years (30yr)</td>
+            <td class="fw-semibold pe-3">{{ summary.assessment_frequency.n_assessment_years.p90 | round(0) | int }} yrs</td>
+          </tr>
+          <tr>
+            <td class="text-muted ps-3">Largest single-year assessment P50</td>
+            <td class="fw-semibold">${{ "{:,.0f}".format(summary.assessment_frequency.max_single_assessment.p50) }}</td>
+            <td class="text-muted">Largest single-year assessment P90</td>
+            <td class="fw-semibold pe-3">${{ "{:,.0f}".format(summary.assessment_frequency.max_single_assessment.p90) }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted ps-3">Contribution adequacy ratio</td>
+            <td class="fw-semibold {% if summary.contribution_adequacy_ratio < 0.8 %}text-danger{% elif summary.contribution_adequacy_ratio < 1.0 %}text-warning{% else %}text-success{% endif %}">
+              {{ "{:.2f}".format(summary.contribution_adequacy_ratio) }}
+              {% if summary.contribution_adequacy_ratio < 1.0 %}<small class="ms-1">(underfunded under stress)</small>{% endif %}
+            </td>
+            <td class="text-muted" colspan="2"><small>Annual contribution ÷ median annual stressed outflow. &lt;1.0 = contributions trail spending under stress.</small></td>
           </tr>
         </tbody>
       </table>

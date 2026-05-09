@@ -97,8 +97,8 @@ def download_csv():
         summary = json.load(f)
 
     rows = []
-    for view in ("kpis_total", "kpis_per_unit"):
-        for kpi, stats in summary[view].items():
+    for view in ("kpis_total", "kpis_per_unit", "kpis_balance_total", "kpis_balance_per_unit", "assessment_frequency"):
+        for kpi, stats in summary.get(view, {}).items():
             rows.append({
                 "view": view,
                 "kpi": kpi,

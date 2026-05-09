@@ -264,6 +264,15 @@ def run_stress_test(components: List[Dict[str, Any]],
     a_1_10 = np.zeros(num_trials)
     a_total = np.zeros(num_trials)
     total_outflow = np.zeros(num_trials)
+    min_bal_1_5  = np.zeros(num_trials)
+    min_bal_6_10 = np.zeros(num_trials)
+    min_bal_30yr = np.zeros(num_trials)
+    bal_at_yr10  = np.zeros(num_trials)
+    bal_at_yr30  = np.zeros(num_trials)
+    pct_outflow_1_5  = np.zeros(num_trials)
+    pct_outflow_6_10 = np.zeros(num_trials)
+    n_assessment_yrs  = np.zeros(num_trials)
+    max_single_assessment = np.zeros(num_trials)
 
     for t in range(num_trials):
         result = run_trial(
@@ -274,11 +283,26 @@ def run_stress_test(components: List[Dict[str, Any]],
             annual_contribution=annual_contribution,
             horizon=horizon,
         )
+        bp = result["balance_path"]
+        of = result["yearly_outflow"]
+        assessments = result["yearly_assessment"]
+        total_of = float(of.sum())
+
         a_1_5[t] = result["assessment_yr_1_5"]
         a_6_10[t] = result["assessment_yr_6_10"]
         a_1_10[t] = result["assessment_yr_1_10"]
         a_total[t] = result["assessment_total"]
-        total_outflow[t] = result["total_outflow_30yr"]
+        total_outflow[t] = total_of
+
+        min_bal_1_5[t]  = float(bp[0:5].min())
+        min_bal_6_10[t] = float(bp[5:min(10, horizon)].min()) if horizon > 5 else float(bp.min())
+        min_bal_30yr[t] = float(bp.min())
+        bal_at_yr10[t]  = float(bp[min(9, horizon - 1)])
+        bal_at_yr30[t]  = float(bp[-1])
+        pct_outflow_1_5[t]  = float(of[0:5].sum() / total_of) if total_of > 0 else 0.0
+        pct_outflow_6_10[t] = float(of[5:min(10, horizon)].sum() / total_of) if total_of > 0 else 0.0
+        n_assessment_yrs[t]  = float((assessments > 0).sum())
+        max_single_assessment[t] = float(assessments.max())
 
     # Per-unit views
     def per_unit(arr: np.ndarray) -> np.ndarray:
@@ -299,17 +323,39 @@ def run_stress_test(components: List[Dict[str, Any]],
             "cost_shock_sigma": cost_shock_sigma,
         },
         "kpis_total": {
-            "assessment_yr_1_5": percentile_summary(a_1_5),
-            "assessment_yr_6_10": percentile_summary(a_6_10),
-            "assessment_yr_1_10": percentile_summary(a_1_10),
+            "assessment_yr_1_5":    percentile_summary(a_1_5),
+            "assessment_yr_6_10":   percentile_summary(a_6_10),
+            "assessment_yr_1_10":   percentile_summary(a_1_10),
             "assessment_30yr_total": percentile_summary(a_total),
-            "outflow_30yr_total": percentile_summary(total_outflow),
+            "outflow_30yr_total":   percentile_summary(total_outflow),
         },
         "kpis_per_unit": {
-            "assessment_yr_1_5": percentile_summary(per_unit(a_1_5)),
-            "assessment_yr_6_10": percentile_summary(per_unit(a_6_10)),
-            "assessment_yr_1_10": percentile_summary(per_unit(a_1_10)),
+            "assessment_yr_1_5":    percentile_summary(per_unit(a_1_5)),
+            "assessment_yr_6_10":   percentile_summary(per_unit(a_6_10)),
+            "assessment_yr_1_10":   percentile_summary(per_unit(a_1_10)),
             "assessment_30yr_total": percentile_summary(per_unit(a_total)),
+        },
+        "kpis_balance_total": {
+            "min_balance_yr_1_5":  percentile_summary(min_bal_1_5),
+            "min_balance_yr_6_10": percentile_summary(min_bal_6_10),
+            "min_balance_30yr":    percentile_summary(min_bal_30yr),
+            "balance_at_yr10":     percentile_summary(bal_at_yr10),
+            "balance_at_yr30":     percentile_summary(bal_at_yr30),
+        },
+        "kpis_balance_per_unit": {
+            "min_balance_yr_1_5":  percentile_summary(per_unit(min_bal_1_5)),
+            "min_balance_yr_6_10": percentile_summary(per_unit(min_bal_6_10)),
+            "min_balance_30yr":    percentile_summary(per_unit(min_bal_30yr)),
+            "balance_at_yr10":     percentile_summary(per_unit(bal_at_yr10)),
+            "balance_at_yr30":     percentile_summary(per_unit(bal_at_yr30)),
+        },
+        "expenditure_distribution": {
+            "pct_outflow_yr_1_5":  float(np.median(pct_outflow_1_5)),
+            "pct_outflow_yr_6_10": float(np.median(pct_outflow_6_10)),
+        },
+        "assessment_frequency": {
+            "n_assessment_years":    percentile_summary(n_assessment_yrs),
+            "max_single_assessment": percentile_summary(max_single_assessment),
         },
         "probability_of_assessment": {
             "yr_1_5": float(np.mean(a_1_5 > 0)),
@@ -317,6 +363,10 @@ def run_stress_test(components: List[Dict[str, Any]],
             "yr_1_10": float(np.mean(a_1_10 > 0)),
             "30yr": float(np.mean(a_total > 0)),
         },
+        "contribution_adequacy_ratio": float(
+            annual_contribution / (float(np.median(total_outflow)) / horizon)
+            if np.median(total_outflow) > 0 else float("inf")
+        ),
     }
     return summary
 

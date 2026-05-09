@@ -154,6 +154,74 @@
     </div>
   </div>
 
+  <!-- Property Deterioration -->
+  <div class="card mb-4">
+    <div class="card-header py-2"><h6 class="mb-0">Property Deterioration (Unstressed)</h6></div>
+    <div class="card-body">
+      <div class="row g-3 mb-3 text-center">
+        <div class="col-md-3 col-6">
+          <div class="text-muted small">Total Annual Deterioration</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(summary.deterioration.total_annual) }}</div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="text-muted small">Annual Deterioration / Unit</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(summary.deterioration.per_unit_annual) }}</div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="text-muted small">Contribution / Deterioration</div>
+          {% set fr = summary.deterioration.funding_ratio %}
+          <div class="fw-semibold fs-5 {% if fr < 0.8 %}text-danger{% elif fr < 1.0 %}text-warning{% else %}text-success{% endif %}">
+            {{ "{:.2f}×".format(fr) if fr else "N/A" }}
+          </div>
+          <div class="text-muted" style="font-size:0.72rem;">
+            {% if fr and fr >= 1.0 %}contributions exceed deterioration rate
+            {% elif fr %}contributions trail deterioration rate
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="text-muted small">Contribution / Unit / Year</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(summary.config.annual_contribution_per_unit) }}</div>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 kpi-table">
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th class="text-end">Annual Deterioration</th>
+              <th class="text-end">% of Total</th>
+              <th style="min-width:120px;">Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in summary.deterioration.components %}
+            <tr>
+              <td class="kpi-label">{{ row.name }}</td>
+              <td class="text-end">${{ "{:,.0f}".format(row.annual) }}</td>
+              <td class="text-end">{{ row.pct }}%</td>
+              <td>
+                <div class="progress" style="height:8px; margin-top:4px;">
+                  <div class="progress-bar" style="width:{{ row.pct }}%; background:#1a3a5c;"></div>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="table-light fw-semibold">
+              <td>Total</td>
+              <td class="text-end">${{ "{:,.0f}".format(summary.deterioration.total_annual) }}</td>
+              <td class="text-end">100%</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- Reserve Balance KPI Tables -->
   {% set bal_labels = [
     ("min_balance_yr_1_5",  "Minimum Balance — Years 1–5"),

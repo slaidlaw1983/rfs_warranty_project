@@ -21,6 +21,89 @@ app.secret_key = os.environ.get("FLASK_SECRET", "change-this-in-production")
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB
 
 
+def calculate_warranty_risk_analysis(raw_trials: dict,
+                                      num_units: int,
+                                      standard_price: float,
+                                      coverage_per_unit: float = 500.0,
+                                      premium_markup_pct: float = 0.50,
+                                      warranty_term_years: int = 5,
+                                      target_loss_ratio: float = 0.50) -> dict:
+    """
+    Use the stress test trial outcomes to evaluate warranty risk at given target terms.
+
+    For each trial, compute the warranty payout as min(trial_assessment, coverage_cap).
+    Average across trials to get expected payout. Compare to total premium over the term.
+    """
+    import statistics
+
+    # Pick the trial array matching the warranty term
+    if warranty_term_years == 5:
+        trials = raw_trials.get("assessment_yr_1_5", [])
+    elif warranty_term_years == 10:
+        trials = raw_trials.get("assessment_yr_1_10", [])
+    else:
+        trials = raw_trials.get("assessment_yr_1_5", [])
+
+    if not trials:
+        return None
+
+    coverage = coverage_per_unit * num_units
+    annual_premium = standard_price * premium_markup_pct
+    term_premium = annual_premium * warranty_term_years
+    deductible = coverage * 0.10
+
+    # Capped expected payout — per trial, payout = min(assessment - deductible, coverage)
+    # Floor at 0 (no negative payout)
+    capped_payouts = [max(0.0, min(t - deductible, coverage)) if t > 0 else 0.0 for t in trials]
+    expected_payout = sum(capped_payouts) / len(capped_payouts)
+    expected_payout_uncapped = sum(trials) / len(trials)
+
+    claim_count = sum(1 for t in trials if t > 0)
+    claim_probability = claim_count / len(trials)
+    payouts_when_claim = [p for p, t in zip(capped_payouts, trials) if t > 0 and p > 0]
+    mean_payout_when_claim = (sum(payouts_when_claim) / len(payouts_when_claim)
+                              if payouts_when_claim else 0.0)
+
+    actual_loss_ratio = expected_payout / term_premium if term_premium > 0 else 0.0
+
+    # Verdict colour
+    if actual_loss_ratio <= 0.30:
+        verdict = "highly_profitable"
+        verdict_label = "Highly profitable — room to expand coverage or reduce premium"
+    elif actual_loss_ratio <= target_loss_ratio:
+        verdict = "on_target"
+        verdict_label = "On target — warranty is profitable at these terms"
+    elif actual_loss_ratio <= target_loss_ratio + 0.20:
+        verdict = "marginal"
+        verdict_label = "Marginal — close to break-even; consider adjusting terms"
+    else:
+        verdict = "underpriced"
+        verdict_label = "Underpriced — warranty cannot cover modeled losses at these terms"
+
+    return {
+        "target_terms": {
+            "warranty_term_years":  warranty_term_years,
+            "coverage_per_unit":    coverage_per_unit,
+            "coverage_total":       coverage,
+            "deductible":           deductible,
+            "premium_markup_pct":   premium_markup_pct,
+            "annual_premium":       annual_premium,
+            "term_premium":         term_premium,
+            "target_loss_ratio":    target_loss_ratio,
+        },
+        "stress_results": {
+            "n_trials":              len(trials),
+            "claim_probability":     claim_probability,
+            "expected_payout_capped":   round(expected_payout, 0),
+            "expected_payout_uncapped": round(expected_payout_uncapped, 0),
+            "mean_payout_when_claim":   round(mean_payout_when_claim, 0),
+        },
+        "actual_loss_ratio": round(actual_loss_ratio, 4),
+        "verdict":           verdict,
+        "verdict_label":     verdict_label,
+    }
+
+
 def calculate_annual_deterioration(components: list, num_units: int) -> dict:
     """
     Calculate theoretical annual deterioration for each component and the property total.
@@ -170,6 +253,36 @@ def run():
             "contribution_growth": contribution_growth,
         },
     }
+
+    # Warranty risk analysis — uses the property's Standard price (defaults to
+    # Apartment pricing as a baseline; the user can pass property_type to override)
+    property_type = request.form.get("property_type", "Apartment").strip() or "Apartment"
+    try:
+        from pricing import BASIC_PRICES, STANDARD_MARKUP, bracket_index_for_units, _round_to_50
+        idx = bracket_index_for_units(num_units)
+        if property_type in BASIC_PRICES:
+            basic_price = BASIC_PRICES[property_type][idx]
+        else:
+            basic_price = BASIC_PRICES["Apartment"][idx]
+        standard_price = _round_to_50(basic_price * STANDARD_MARKUP)
+
+        summary["warranty_analysis"] = calculate_warranty_risk_analysis(
+            raw_trials=summary.get("raw_trials", {}),
+            num_units=num_units,
+            standard_price=standard_price,
+            coverage_per_unit=500.0,
+            premium_markup_pct=0.50,
+            warranty_term_years=5,
+            target_loss_ratio=0.50,
+        )
+        summary["warranty_analysis"]["property_type_used"] = property_type
+        summary["warranty_analysis"]["standard_price_used"] = standard_price
+    except Exception as e:
+        print(f"Warranty analysis failed: {e}")
+        summary["warranty_analysis"] = None
+
+    # Strip raw_trials from the summary before storing — large, only needed during analysis
+    summary.pop("raw_trials", None)
     # Funding ratio: contribution vs total annual deterioration
     det_total = summary["deterioration"]["total_annual"]
     summary["deterioration"]["funding_ratio"] = round(

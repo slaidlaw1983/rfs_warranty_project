@@ -367,6 +367,13 @@ def run_stress_test(components: List[Dict[str, Any]],
             annual_contribution / (float(np.median(total_outflow)) / horizon)
             if np.median(total_outflow) > 0 else float("inf")
         ),
+        # Raw trial-level arrays for downstream actuarial analysis (warranty pricing).
+        # These are the per-trial 5-year and 10-year cumulative assessment values.
+        "raw_trials": {
+            "assessment_yr_1_5":  a_1_5.tolist(),
+            "assessment_yr_6_10": a_6_10.tolist(),
+            "assessment_yr_1_10": a_1_10.tolist(),
+        },
     }
     return summary
 

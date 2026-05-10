@@ -70,6 +70,105 @@
     </div>
   </div>
 
+  <!-- Warranty Risk Analysis -->
+  {% if summary.warranty_analysis %}
+  {% set wa = summary.warranty_analysis %}
+  {% set t = wa.target_terms %}
+  {% set s = wa.stress_results %}
+  {% set verdict_color = {'highly_profitable':'success','on_target':'success','marginal':'warning','underpriced':'danger'}[wa.verdict] %}
+  <div class="card mb-4">
+    <div class="card-header py-2 d-flex justify-content-between align-items-center" style="background:#b8860b;">
+      <h6 class="mb-0 text-white">Warranty Risk Analysis</h6>
+      <small class="text-white-50">
+        {{ wa.property_type_used }} · Standard ${{ "{:,.0f}".format(wa.standard_price_used) }} ·
+        {{ t.warranty_term_years }}-year warranty
+      </small>
+    </div>
+    <div class="card-body">
+
+      <!-- Target Terms -->
+      <div class="row g-3 mb-3 text-center border-bottom pb-3">
+        <div class="col-12">
+          <div class="text-muted small fw-semibold">TARGET TERMS</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">Annual Warranty Premium</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(t.annual_premium) }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">{{ "{:.0%}".format(t.premium_markup_pct) }} × Standard</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">{{ t.warranty_term_years }}-Year Total Premium</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(t.term_premium) }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">Coverage / Deductible</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(t.coverage_total) }} / ${{ "{:,.0f}".format(t.deductible) }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">${{ "{:,.0f}".format(t.coverage_per_unit) }} / unit</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">Target Max Loss Ratio</div>
+          <div class="fw-semibold fs-5">{{ "{:.0%}".format(t.target_loss_ratio) }}</div>
+        </div>
+      </div>
+
+      <!-- Modeled Results -->
+      <div class="row g-3 mb-3 text-center border-bottom pb-3">
+        <div class="col-12">
+          <div class="text-muted small fw-semibold">FROM {{ s.n_trials }} STRESS-TEST TRIALS</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">Claim Probability</div>
+          <div class="fw-semibold fs-5">{{ "{:.1%}".format(s.claim_probability) }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">over {{ t.warranty_term_years }}-yr term</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">Mean Payout When Claim</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.mean_payout_when_claim) }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">capped at coverage</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">Expected Payout (Avg)</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.expected_payout_capped) }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">across all trials, capped</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">Uncapped Expected Loss</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.expected_payout_uncapped) }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">if coverage were unlimited</div>
+        </div>
+      </div>
+
+      <!-- Verdict -->
+      <div class="row align-items-center">
+        <div class="col-md-4 text-center">
+          <div class="text-muted small">Actual Loss Ratio</div>
+          <div class="fw-bold display-6 text-{{ verdict_color }}">{{ "{:.0%}".format(wa.actual_loss_ratio) }}</div>
+          <div class="text-muted small">Expected payout ÷ {{ t.warranty_term_years }}-yr premium</div>
+        </div>
+        <div class="col-md-8">
+          <div class="alert alert-{{ verdict_color }} mb-0">
+            <strong>
+              {% if wa.verdict == 'highly_profitable' %}✓ Highly profitable
+              {% elif wa.verdict == 'on_target' %}✓ On target
+              {% elif wa.verdict == 'marginal' %}⚠ Marginal
+              {% else %}✗ Underpriced
+              {% endif %}
+            </strong> — {{ wa.verdict_label }}
+            <div class="mt-2 small">
+              At target terms, expected payout is ${{ "{:,.0f}".format(s.expected_payout_capped) }} against premium of ${{ "{:,.0f}".format(t.term_premium) }} (loss ratio {{ "{:.1%}".format(wa.actual_loss_ratio) }}).
+              {% if wa.verdict == 'highly_profitable' %}
+              You could offer better terms (e.g. lower premium or higher coverage) and still maintain profitability.
+              {% elif wa.verdict == 'underpriced' %}
+              Consider a higher premium, lower coverage, or shorter warranty term for this property profile.
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   {% set kpi_labels = [
     ("assessment_yr_1_5",    "Special Assessment — Years 1–5"),
     ("assessment_yr_6_10",   "Special Assessment — Years 6–10"),

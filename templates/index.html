@@ -66,16 +66,26 @@
 
         <!-- Property Parameters -->
         <p class="section-label">Property Parameters</p>
-        <div class="row g-3 mb-4">
-          <div class="col-md-4">
+        <div class="row g-3 mb-3">
+          <div class="col-md-3">
+            <label class="form-label">Property Type</label>
+            <select class="form-select" name="property_type">
+              <option value="Apartment">Apartment</option>
+              <option value="Townhouse">Townhouse</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Bareland">Bareland</option>
+            </select>
+            <div class="form-text">Used for warranty risk analysis</div>
+          </div>
+          <div class="col-md-3">
             <label class="form-label">Number of Units <span class="text-danger">*</span></label>
             <input type="number" class="form-control" name="num_units" placeholder="e.g. 24" min="1" step="1" required />
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label class="form-label">Opening Reserve Balance ($) <span class="text-danger">*</span></label>
             <input type="number" class="form-control" name="starting_reserve" placeholder="e.g. 125000" min="0" step="1" required />
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label class="form-label">Annual Contribution ($) <span class="text-danger">*</span></label>
             <input type="number" class="form-control" name="annual_contribution" placeholder="e.g. 48000" min="0" step="1" required />
           </div>

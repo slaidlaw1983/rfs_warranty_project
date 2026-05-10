@@ -114,32 +114,37 @@
       <!-- Modeled Results -->
       <div class="row g-3 mb-3 text-center border-bottom pb-3">
         <div class="col-12">
-          <div class="text-muted small fw-semibold">FROM {{ s.n_trials }} STRESS-TEST TRIALS</div>
+          <div class="text-muted small fw-semibold">
+            FROM {{ s.n_trials }} STRESS-TEST TRIALS
+            <span class="text-muted" style="font-size:0.7rem; font-weight:400;">
+              (normal life shock × lognormal cost shock)
+            </span>
+          </div>
         </div>
         <div class="col-md-3">
-          <div class="text-muted small">Claim Probability</div>
+          <div class="text-muted small">P(Special Assessment)</div>
           <div class="fw-semibold fs-5">{{ "{:.1%}".format(s.claim_probability) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">over {{ t.warranty_term_years }}-yr term</div>
+          <div class="text-muted" style="font-size:0.72rem;">at least one assessment in {{ t.warranty_term_years }}-yr term</div>
         </div>
         <div class="col-md-3">
-          <div class="text-muted small">Mean Payout When Claim</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.mean_payout_when_claim) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">capped at coverage</div>
+          <div class="text-muted small">Lump-Sum Payout per Claim</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.payout_per_claim) }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">coverage minus deductible</div>
         </div>
         <div class="col-md-3">
-          <div class="text-muted small">Expected Payout (Avg)</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.expected_payout_capped) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">across all trials, capped</div>
+          <div class="text-muted small">Expected Payout</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.expected_payout) }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">P(claim) × payout</div>
         </div>
         <div class="col-md-3">
-          <div class="text-muted small">Uncapped Expected Loss</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.expected_payout_uncapped) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">if coverage were unlimited</div>
+          <div class="text-muted small">Mean Modeled Assessment</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.mean_assessment_uncapped) }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">avg actual assessment, gross</div>
         </div>
       </div>
 
       <!-- Verdict -->
-      <div class="row align-items-center">
+      <div class="row align-items-center mb-3">
         <div class="col-md-4 text-center">
           <div class="text-muted small">Actual Loss Ratio</div>
           <div class="fw-bold display-6 text-{{ verdict_color }}">{{ "{:.0%}".format(wa.actual_loss_ratio) }}</div>
@@ -155,13 +160,59 @@
               {% endif %}
             </strong> — {{ wa.verdict_label }}
             <div class="mt-2 small">
-              At target terms, expected payout is ${{ "{:,.0f}".format(s.expected_payout_capped) }} against premium of ${{ "{:,.0f}".format(t.term_premium) }} (loss ratio {{ "{:.1%}".format(wa.actual_loss_ratio) }}).
-              {% if wa.verdict == 'highly_profitable' %}
-              You could offer better terms (e.g. lower premium or higher coverage) and still maintain profitability.
-              {% elif wa.verdict == 'underpriced' %}
-              Consider a higher premium, lower coverage, or shorter warranty term for this property profile.
+              At target terms, expected payout is ${{ "{:,.0f}".format(s.expected_payout) }} ({{ "{:.1%}".format(s.claim_probability) }} × ${{ "{:,.0f}".format(s.payout_per_claim) }}) against premium of ${{ "{:,.0f}".format(t.term_premium) }} (loss ratio {{ "{:.1%}".format(wa.actual_loss_ratio) }}).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Eligibility & Custom Quote -->
+      <div class="border-top pt-3">
+        <div class="row align-items-center">
+          <div class="col-md-4 text-center">
+            <div class="text-muted small mb-1">Underwriting Decision</div>
+            <div class="badge bg-{{ wa.eligibility.color }} fs-6 px-3 py-2 mb-1">
+              {% if wa.eligibility.decision == 'eligible' %}✓ ELIGIBLE
+              {% elif wa.eligibility.decision == 'conditional' %}⚠ CONDITIONAL
+              {% else %}✗ DECLINE
               {% endif %}
             </div>
+            <div class="fw-semibold mt-1">{{ wa.eligibility.label }}</div>
+          </div>
+          <div class="col-md-8">
+            <div class="text-muted small">{{ wa.eligibility.reason }}</div>
+
+            {% if wa.custom_quote %}
+            <div class="mt-3 p-3 rounded" style="background:#fff3cd; border:1px solid #ffe69c;">
+              <div class="fw-semibold mb-2" style="color:#856404;">
+                {% if wa.eligibility.decision == 'conditional' %}Custom Quote Recommendation
+                {% else %}Reference: Required Premium to Break Even
+                {% endif %}
+              </div>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <div class="text-muted small">Required Annual Premium</div>
+                  <div class="fw-semibold fs-5">${{ "{:,.0f}".format(wa.custom_quote.required_annual_premium) }}</div>
+                  <div class="text-muted" style="font-size:0.72rem;">vs. ${{ "{:,.0f}".format(t.annual_premium) }} at standard markup</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small">Required Premium Tier</div>
+                  <div class="fw-semibold fs-5">{{ "{:.2f}".format(wa.custom_quote.required_premium_tier_mult) }}× Standard</div>
+                  <div class="text-muted" style="font-size:0.72rem;">vs. {{ "{:.2f}".format(wa.custom_quote.default_premium_tier_mult) }}× at standard pricing</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small">Premium Increase Needed</div>
+                  <div class="fw-semibold fs-5">+{{ "{:.0%}".format(wa.custom_quote.premium_increase_pct) }}</div>
+                  <div class="text-muted" style="font-size:0.72rem;">to hit {{ "{:.0%}".format(t.target_loss_ratio) }} loss ratio target</div>
+                </div>
+              </div>
+              {% if wa.eligibility.decision == 'decline' %}
+              <div class="mt-2 small" style="color:#856404;">
+                <em>This quote is shown for reference only. The required premium is impractical for this property's risk profile — recommend the board increase contributions before re-quoting.</em>
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
           </div>
         </div>
       </div>

@@ -52,17 +52,16 @@ def calculate_warranty_risk_analysis(raw_trials: dict,
     term_premium = annual_premium * warranty_term_years
     deductible = coverage * 0.10
 
-    # Capped expected payout — per trial, payout = min(assessment - deductible, coverage)
-    # Floor at 0 (no negative payout)
-    capped_payouts = [max(0.0, min(t - deductible, coverage)) if t > 0 else 0.0 for t in trials]
-    expected_payout = sum(capped_payouts) / len(capped_payouts)
-    expected_payout_uncapped = sum(trials) / len(trials)
+    # Lump-sum payout model: on ANY special assessment within the warranty term,
+    # warranty pays out (coverage − deductible). Probability of payout is the
+    # claim probability from the stress test (normal-life × lognormal-cost shocks).
+    payout_per_claim   = max(0.0, coverage - deductible)
+    claim_count        = sum(1 for t in trials if t > 0)
+    claim_probability  = claim_count / len(trials)
+    expected_payout    = payout_per_claim * claim_probability
 
-    claim_count = sum(1 for t in trials if t > 0)
-    claim_probability = claim_count / len(trials)
-    payouts_when_claim = [p for p, t in zip(capped_payouts, trials) if t > 0 and p > 0]
-    mean_payout_when_claim = (sum(payouts_when_claim) / len(payouts_when_claim)
-                              if payouts_when_claim else 0.0)
+    # Reference: mean of actual modeled assessments (uncapped, gross of deductible)
+    expected_assessment_uncapped = sum(trials) / len(trials)
 
     actual_loss_ratio = expected_payout / term_premium if term_premium > 0 else 0.0
 
@@ -80,6 +79,54 @@ def calculate_warranty_risk_analysis(raw_trials: dict,
         verdict = "underpriced"
         verdict_label = "Underpriced — warranty cannot cover modeled losses at these terms"
 
+    # Eligibility decision
+    if actual_loss_ratio <= target_loss_ratio:
+        eligibility = "eligible"
+        eligibility_label = "Eligible at standard terms"
+        eligibility_color = "success"
+        eligibility_reason = (
+            f"Loss ratio {actual_loss_ratio:.0%} is at or below target ({target_loss_ratio:.0%}). "
+            f"Standard 1.50× Standard pricing covers the modeled risk."
+        )
+    elif actual_loss_ratio <= 1.00:
+        eligibility = "conditional"
+        eligibility_label = "Conditional — custom quote required"
+        eligibility_color = "warning"
+        eligibility_reason = (
+            f"Loss ratio {actual_loss_ratio:.0%} exceeds target ({target_loss_ratio:.0%}). "
+            f"Standard pricing is insufficient — quote at the custom premium below."
+        )
+    else:
+        eligibility = "decline"
+        eligibility_label = "Decline — request funding plan first"
+        eligibility_color = "danger"
+        eligibility_reason = (
+            f"Loss ratio {actual_loss_ratio:.0%} exceeds 100% — warranty would pay out more "
+            f"than it collects. Property is structurally underfunded; recommend the board "
+            f"address contribution levels before considering warranty."
+        )
+
+    # Custom quote — what premium would hit the target loss ratio?
+    custom_quote = None
+    if eligibility != "eligible" and expected_payout > 0:
+        required_term_premium  = expected_payout / target_loss_ratio
+        required_annual_premium = required_term_premium / warranty_term_years
+        # Premium TIER multiplier (Standard + warranty) vs Standard alone
+        # e.g. 1.78× means total Premium tier price is 1.78 × Standard
+        required_premium_tier_mult = (
+            (standard_price + required_annual_premium) / standard_price
+            if standard_price else 0.0
+        )
+        custom_quote = {
+            "required_annual_premium":     round(required_annual_premium, 0),
+            "required_term_premium":       round(required_term_premium, 0),
+            "required_premium_tier_mult":  round(required_premium_tier_mult, 2),
+            "default_premium_tier_mult":   round(1.0 + premium_markup_pct, 2),
+            "premium_increase_pct":        round(
+                (required_annual_premium - annual_premium) / annual_premium, 2
+            ) if annual_premium > 0 else 0.0,
+        }
+
     return {
         "target_terms": {
             "warranty_term_years":  warranty_term_years,
@@ -92,15 +139,22 @@ def calculate_warranty_risk_analysis(raw_trials: dict,
             "target_loss_ratio":    target_loss_ratio,
         },
         "stress_results": {
-            "n_trials":              len(trials),
-            "claim_probability":     claim_probability,
-            "expected_payout_capped":   round(expected_payout, 0),
-            "expected_payout_uncapped": round(expected_payout_uncapped, 0),
-            "mean_payout_when_claim":   round(mean_payout_when_claim, 0),
+            "n_trials":                     len(trials),
+            "claim_probability":            claim_probability,
+            "payout_per_claim":             round(payout_per_claim, 0),
+            "expected_payout":              round(expected_payout, 0),
+            "mean_assessment_uncapped":     round(expected_assessment_uncapped, 0),
         },
         "actual_loss_ratio": round(actual_loss_ratio, 4),
         "verdict":           verdict,
         "verdict_label":     verdict_label,
+        "eligibility": {
+            "decision": eligibility,
+            "label":    eligibility_label,
+            "color":    eligibility_color,
+            "reason":   eligibility_reason,
+        },
+        "custom_quote": custom_quote,
     }
 
 

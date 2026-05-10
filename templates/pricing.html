@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RFS Pricing Calculator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background: #f4f6f9; }
+    .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .card-header { background: #1a3a5c; color: #fff; border-radius: 12px 12px 0 0 !important; }
+    .card-header.gold { background: #b8860b; }
+    .card-header.green { background: #1e6b3c; }
+    .section-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+                     letter-spacing: 0.06em; color: #6c757d; margin-bottom: 0.5rem; }
+    .btn-primary { background: #1a3a5c; border-color: #1a3a5c; }
+    .btn-primary:hover { background: #15304d; border-color: #15304d; }
+    .tier-price { font-size: 2rem; font-weight: 700; color: #1a3a5c; }
+    .tier-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .tier-card:hover { transform: translateY(-2px); }
+    .tier-card.featured { border: 2px solid #b8860b; }
+    .tier-card.featured .tier-price { color: #b8860b; }
+    .tier-card ul { padding-left: 1.2rem; font-size: 0.92rem; }
+    .pricing-table th, .pricing-table td { font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+<div class="container py-5" style="max-width: 1100px;">
+
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-0" style="color:#1a3a5c;">RFS Pricing Calculator</h2>
+      <p class="text-muted mb-0">Three service tiers — get a quote by property type and unit count.</p>
+    </div>
+    <a href="/" class="btn btn-outline-secondary">← Back to Stress Test</a>
+  </div>
+
+  <!-- Quote Form -->
+  <div class="card mb-4">
+    <div class="card-header py-3"><h5 class="mb-0">Get a Quote</h5></div>
+    <div class="card-body p-4">
+      <form action="/pricing" method="GET">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label">Property Type</label>
+            <select class="form-select" name="property_type" required>
+              <option value="">— Select —</option>
+              {% for pt in property_types %}
+              <option value="{{ pt }}" {% if pt == selected_type %}selected{% endif %}>{{ pt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Number of Units</label>
+            <input type="number" class="form-control" name="num_units" min="2" max="9999" step="1"
+                   value="{{ selected_units }}" placeholder="e.g. 24" required />
+          </div>
+          <div class="col-md-2 d-grid">
+            <button type="submit" class="btn btn-primary">Get Quote</button>
+          </div>
+        </div>
+      </form>
+      {% if error %}
+      <div class="alert alert-danger mt-3 mb-0">{{ error }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if quote %}
+  <!-- Quote Result -->
+  <h4 class="mb-3" style="color:#1a3a5c;">
+    Quote — {{ quote.property_type }} ({{ quote.num_units }} units, bracket {{ quote.bracket.label }})
+  </h4>
+
+  <div class="row g-3 mb-4">
+    <!-- Basic -->
+    <div class="col-md-4">
+      <div class="card tier-card h-100">
+        <div class="card-header py-2"><h6 class="mb-0">Basic</h6></div>
+        <div class="card-body text-center">
+          <div class="tier-price">${{ "{:,.0f}".format(quote.basic.price) }}</div>
+          <div class="text-muted small mb-3">RFS Only</div>
+          <ul class="text-start">
+            {% for item in quote.basic.includes %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Standard -->
+    <div class="col-md-4">
+      <div class="card tier-card h-100">
+        <div class="card-header py-2"><h6 class="mb-0">Standard</h6></div>
+        <div class="card-body text-center">
+          <div class="tier-price">${{ "{:,.0f}".format(quote.standard.price) }}</div>
+          <div class="text-muted small mb-3">{{ quote.standard.markup }} · RFS + StelorPM</div>
+          <ul class="text-start">
+            {% for item in quote.standard.includes %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Premium -->
+    <div class="col-md-4">
+      <div class="card tier-card featured h-100">
+        <div class="card-header gold py-2"><h6 class="mb-0 text-white">Premium (Warranty)</h6></div>
+        <div class="card-body text-center">
+          <div class="tier-price">${{ "{:,.0f}".format(quote.premium.price) }}</div>
+          <div class="text-muted small mb-3">
+            {{ quote.premium.markup }} · Coverage ${{ "{:,.0f}".format(quote.premium.coverage) }} / Deductible ${{ "{:,.0f}".format(quote.premium.deductible) }}
+          </div>
+          <ul class="text-start">
+            {% for item in quote.premium.includes %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+          <div class="text-muted mt-2" style="font-size:0.78rem;">
+            Expected claim rate: {{ "{:.1%}".format(quote.premium.expected_claim_rate) }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Full Pricing Table -->
+  <div class="card">
+    <div class="card-header py-2"><h6 class="mb-0">Full Pricing Matrix</h6></div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 pricing-table">
+          <thead class="table-light">
+            <tr>
+              <th>Property Type</th>
+              <th>Units</th>
+              <th class="text-end">Basic</th>
+              <th class="text-end">Standard</th>
+              <th class="text-end">Premium</th>
+              <th class="text-end">Markup</th>
+              <th class="text-end">Coverage</th>
+              <th class="text-end">Deductible</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set ns = namespace(current=None) %}
+            {% for r in full_table %}
+              {% if r.property_type != ns.current %}
+                {% set ns.current = r.property_type %}
+                <tr class="table-secondary">
+                  <td colspan="8" class="fw-semibold">{{ r.property_type }}</td>
+                </tr>
+              {% endif %}
+              <tr>
+                <td></td>
+                <td>{{ r.bracket }}</td>
+                <td class="text-end">${{ "{:,.0f}".format(r.basic) }}</td>
+                <td class="text-end">${{ "{:,.0f}".format(r.standard) }}</td>
+                <td class="text-end fw-semibold" style="color:#b8860b;">${{ "{:,.0f}".format(r.premium) }}</td>
+                <td class="text-end">{{ "{:.2f}".format(r.premium_markup) }}×</td>
+                <td class="text-end">${{ "{:,.0f}".format(r.coverage) }}</td>
+                <td class="text-end">${{ "{:,.0f}".format(r.deductible) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

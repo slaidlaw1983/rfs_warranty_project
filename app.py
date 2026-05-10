@@ -13,6 +13,8 @@ load_dotenv()
 import stress_test as st
 from csv_parser import parse_reserve_csv
 from projection import build_yearly_schedule, build_financial_projection
+from pricing import (PROPERTY_TYPES, UNIT_BRACKETS, get_pricing,
+                     get_full_pricing_table)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "change-this-in-production")
@@ -55,6 +57,29 @@ def calculate_annual_deterioration(components: list, num_units: int) -> dict:
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/pricing")
+def pricing():
+    """Pricing calculator. If property_type and num_units provided, show quote."""
+    quote = None
+    error = None
+    pt = request.args.get("property_type", "").strip()
+    nu = request.args.get("num_units", "").strip()
+    if pt and nu:
+        try:
+            quote = get_pricing(pt, int(nu))
+        except ValueError as e:
+            error = str(e)
+    return render_template(
+        "pricing.html",
+        quote=quote,
+        error=error,
+        property_types=PROPERTY_TYPES,
+        full_table=get_full_pricing_table(),
+        selected_type=pt,
+        selected_units=nu,
+    )
 
 
 @app.route("/download-template")

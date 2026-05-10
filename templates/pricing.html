@@ -109,13 +109,20 @@
         <div class="card-body text-center">
           <div class="tier-price">${{ "{:,.0f}".format(quote.premium.price) }}</div>
           <div class="text-muted small mb-3">
-            {{ quote.premium.markup }} · Coverage ${{ "{:,.0f}".format(quote.premium.coverage) }} / Deductible ${{ "{:,.0f}".format(quote.premium.deductible) }}
+            {{ quote.premium.markup_vs_standard }} · Coverage ${{ "{:,.0f}".format(quote.premium.coverage) }} / Deductible ${{ "{:,.0f}".format(quote.premium.deductible) }}
           </div>
           <ul class="text-start">
             {% for item in quote.premium.includes %}<li>{{ item }}</li>{% endfor %}
           </ul>
-          <div class="text-muted mt-2" style="font-size:0.78rem;">
-            Expected claim rate: {{ "{:.1%}".format(quote.premium.expected_claim_rate) }}
+          <div class="border-top mt-2 pt-2 text-muted text-start" style="font-size:0.78rem;">
+            <div><strong>Pricing breakdown:</strong></div>
+            <div>Standard: ${{ "{:,.0f}".format(quote.standard.price) }}</div>
+            <div>+ Warranty premium: ${{ "{:,.0f}".format(quote.premium.warranty_premium) }}</div>
+            <div>= ${{ "{:,.0f}".format(quote.premium.price) }}</div>
+            <div class="mt-1">
+              Warranty premium = (Coverage × {{ "{:.0%}".format(quote.premium.expected_claim_rate) }} claim rate) ÷ {{ "{:.0%}".format(quote.premium.target_loss_ratio) }} loss ratio
+            </div>
+            <div>Expected loss/condo: ${{ "{:,.0f}".format(quote.premium.expected_loss) }}</div>
           </div>
         </div>
       </div>
@@ -125,7 +132,10 @@
 
   <!-- Full Pricing Table -->
   <div class="card">
-    <div class="card-header py-2"><h6 class="mb-0">Full Pricing Matrix</h6></div>
+    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">Full Pricing Matrix</h6>
+      <small class="text-white-50">Warranty actuarial basis: 10% claim rate, 40% target loss ratio</small>
+    </div>
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-sm table-hover mb-0 pricing-table">
@@ -135,8 +145,9 @@
               <th>Units</th>
               <th class="text-end">Basic</th>
               <th class="text-end">Standard</th>
+              <th class="text-end">+ Warranty</th>
               <th class="text-end">Premium</th>
-              <th class="text-end">Markup</th>
+              <th class="text-end">vs Std</th>
               <th class="text-end">Coverage</th>
               <th class="text-end">Deductible</th>
             </tr>
@@ -147,7 +158,7 @@
               {% if r.property_type != ns.current %}
                 {% set ns.current = r.property_type %}
                 <tr class="table-secondary">
-                  <td colspan="8" class="fw-semibold">{{ r.property_type }}</td>
+                  <td colspan="9" class="fw-semibold">{{ r.property_type }}</td>
                 </tr>
               {% endif %}
               <tr>
@@ -155,8 +166,9 @@
                 <td>{{ r.bracket }}</td>
                 <td class="text-end">${{ "{:,.0f}".format(r.basic) }}</td>
                 <td class="text-end">${{ "{:,.0f}".format(r.standard) }}</td>
+                <td class="text-end text-muted">+${{ "{:,.0f}".format(r.warranty_premium) }}</td>
                 <td class="text-end fw-semibold" style="color:#b8860b;">${{ "{:,.0f}".format(r.premium) }}</td>
-                <td class="text-end">{{ "{:.2f}".format(r.premium_markup) }}×</td>
+                <td class="text-end">{{ "{:.2f}".format(r.markup_vs_std) }}×</td>
                 <td class="text-end">${{ "{:,.0f}".format(r.coverage) }}</td>
                 <td class="text-end">${{ "{:,.0f}".format(r.deductible) }}</td>
               </tr>

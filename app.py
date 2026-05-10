@@ -12,6 +12,7 @@ load_dotenv()
 
 import stress_test as st
 from csv_parser import parse_reserve_csv
+from projection import build_yearly_schedule, build_financial_projection
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "change-this-in-production")
@@ -93,6 +94,9 @@ def run():
         cost_shock_sigma = float(request.form.get("cost_shock_sigma", 0.15))
         num_trials       = int(request.form.get("num_trials",         2000))
         horizon          = int(request.form.get("horizon",            30))
+        inflation_rate       = float(request.form.get("inflation_rate",       0.03))
+        interest_rate        = float(request.form.get("interest_rate",        0.025))
+        contribution_growth  = float(request.form.get("contribution_growth",  0.04))
     except ValueError:
         flash("Please enter valid numbers for all shock parameters.")
         return redirect(url_for("index"))
@@ -111,6 +115,36 @@ def run():
     )
     summary["components_loaded"] = len(components)
     summary["deterioration"] = calculate_annual_deterioration(components, num_units)
+
+    # 30-year cash flow projection — unstressed and stressed
+    def _build_proj(life_mult: float, cost_mult: float):
+        sched = build_yearly_schedule(
+            components, horizon, inflation_rate,
+            life_mult=life_mult, cost_mult=cost_mult,
+        )
+        total_outflow = [
+            sum(sched[c][y] for c in sched) for y in range(horizon)
+        ]
+        fin = build_financial_projection(
+            total_outflow,
+            starting_reserve=starting_reserve,
+            annual_contribution=annual_contribution,
+            contribution_growth=contribution_growth,
+            interest_rate=interest_rate,
+            num_units=num_units,
+            horizon=horizon,
+        )
+        return {"schedule": sched, "financials": fin}
+
+    summary["projection"] = {
+        "unstressed": _build_proj(1.0, 1.0),
+        "stressed":   _build_proj(life_shock_mean, cost_shock_mean),
+        "params": {
+            "inflation_rate":      inflation_rate,
+            "interest_rate":       interest_rate,
+            "contribution_growth": contribution_growth,
+        },
+    }
     # Funding ratio: contribution vs total annual deterioration
     det_total = summary["deterioration"]["total_annual"]
     summary["deterioration"]["funding_ratio"] = round(

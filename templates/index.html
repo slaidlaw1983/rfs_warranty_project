@@ -116,6 +116,28 @@
           </div>
         </div>
 
+        <!-- Financial Parameters -->
+        <p class="section-label">Financial Parameters</p>
+        <p class="text-muted small mb-3">Used for the year-by-year cash flow projection (separate from the Monte Carlo stress test).</p>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label">Inflation Rate</label>
+            <input type="number" class="form-control" name="inflation_rate" value="0.03" min="0" max="0.20" step="0.005" />
+            <div class="form-text">e.g. 0.03 = 3% annual cost inflation</div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Return on Savings</label>
+            <input type="number" class="form-control" name="interest_rate" value="0.025" min="0" max="0.20" step="0.005" />
+            <div class="form-text">e.g. 0.025 = 2.5% on reserve balance</div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Contribution Growth</label>
+            <input type="number" class="form-control" name="contribution_growth" value="0.04" min="0" max="0.20" step="0.005" />
+            <div class="form-text">e.g. 0.04 = 4% annual increase</div>
+          </div>
+        </div>
+
         <div class="d-grid">
           <button type="submit" class="btn btn-primary btn-lg">Run Stress Test</button>
         </div>

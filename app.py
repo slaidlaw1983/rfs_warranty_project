@@ -7,7 +7,7 @@ import tempfile
 from datetime import datetime, timezone
 from email.message import EmailMessage
 
-from flask import (Flask, flash, redirect, render_template,
+from flask import (Flask, Response, flash, redirect, render_template,
                    request, send_file, session, url_for)
 from dotenv import load_dotenv
 
@@ -22,6 +22,24 @@ from pricing import (PROPERTY_TYPES, UNIT_BRACKETS, get_pricing,
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "change-this-in-production")
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB
+
+
+# ── Password gate ────────────────────────────────────────────────────────────
+# If ACCESS_PASSWORD is set in the environment, every request must include
+# HTTP Basic credentials with that password (username can be anything). If
+# unset, the app is open (intended for local development).
+@app.before_request
+def _require_password():
+    expected = os.environ.get("ACCESS_PASSWORD", "")
+    if not expected:
+        return  # No password configured — public/dev mode
+    auth = request.authorization
+    if not auth or auth.password != expected:
+        return Response(
+            "This site is protected. Enter the access password.",
+            401,
+            {"WWW-Authenticate": 'Basic realm="RFS Stress Test"'},
+        )
 
 
 def calculate_warranty_risk_analysis(raw_trials: dict,

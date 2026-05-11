@@ -116,9 +116,9 @@
       <div class="row g-3 mb-3 text-center border-bottom pb-3">
         <div class="col-12">
           <div class="text-muted small fw-semibold">
-            FROM {{ s.n_trials }} UNBIASED MONTE CARLO TRIALS
+            FROM {{ s.n_trials }} MONTE CARLO TRIALS
             <span class="text-muted" style="font-size:0.7rem; font-weight:400;">
-              (cost ~ Lognormal(1.0, σ), life ~ Normal(1.0, σ) — no shifted means)
+              (P50-centered: cost ~ Lognormal, life ~ Normal — same MC as KPIs below)
             </span>
           </div>
         </div>

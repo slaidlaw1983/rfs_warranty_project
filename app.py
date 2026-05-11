@@ -460,27 +460,12 @@ def run():
             basic_price = BASIC_PRICES["Apartment"][idx]
         standard_price = _round_to_50(basic_price * STANDARD_MARKUP)
 
-        # Run a SECOND Monte Carlo pass with UNBIASED multiplier means (1.0) for
-        # the warranty risk analysis. The main stress test above uses the user's
-        # stressed means; the warranty analysis needs the unconditional probability.
-        # Variance (sigma) is kept the same so natural variability still applies.
-        print("Running unbiased MC for warranty analysis...")
-        neutral_summary = st.run_stress_test(
-            components=components,
-            num_trials=1000,
-            starting_reserve=starting_reserve,
-            annual_contribution=annual_contribution,
-            num_units=num_units,
-            horizon=horizon,
-            seed=99,                          # different seed from main run
-            life_shock_mean=1.0,              # unbiased: no shift
-            life_shock_sigma=life_shock_sigma,
-            cost_shock_mean=1.0,              # unbiased: no shift
-            cost_shock_sigma=cost_shock_sigma,
-        )
-
+        # Warranty analysis uses the SAME Monte Carlo as the main results.
+        # With the unified methodology (means=1.0, σ≈0.30 for both), the
+        # main MC's raw_trials directly give P(special assessment) — no
+        # separate unbiased pass needed.
         summary["warranty_analysis"] = calculate_warranty_risk_analysis(
-            raw_trials=neutral_summary.get("raw_trials", {}),
+            raw_trials=summary.get("raw_trials", {}),
             num_units=num_units,
             standard_price=standard_price,
             coverage_per_unit=500.0,
@@ -491,11 +476,11 @@ def run():
         if summary["warranty_analysis"]:
             summary["warranty_analysis"]["property_type_used"] = property_type
             summary["warranty_analysis"]["standard_price_used"] = standard_price
-            # Note the methodology in the summary for transparency
             summary["warranty_analysis"]["methodology_note"] = (
-                f"Probability computed from {neutral_summary['config']['num_trials']} "
-                f"unbiased Monte Carlo trials (cost mean=1.0, life mean=1.0). "
-                f"Variability sigmas: life σ={life_shock_sigma}, cost σ={cost_shock_sigma}."
+                f"Probability computed from {num_trials} Monte Carlo trials. "
+                f"Each component gets independent random cost (lognormal, mean=1.0) "
+                f"and life (normal, mean=1.0) multipliers per trial; "
+                f"sigmas: life σ={life_shock_sigma}, cost σ={cost_shock_sigma}."
             )
     except Exception as e:
         print(f"Warranty analysis failed: {e}")

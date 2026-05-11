@@ -109,35 +109,42 @@
           </div>
         </div>
 
-        <!-- Shock Parameters -->
-        <p class="section-label">Shock Parameters</p>
-        <p class="text-muted small mb-3">Life multiplier &lt;1 shortens design life; cost multiplier &gt;1 increases costs. Defaults model a moderate stress scenario (20% shorter life, 30% higher costs).</p>
+        <!-- Variability Parameters -->
+        <p class="section-label">Variability Parameters</p>
+        <p class="text-muted small mb-3">
+          The engineer's current cost and design life are treated as the P50 (median) for each component.
+          Each Monte Carlo trial draws a random cost (lognormal, mean=1.0) and design life (normal, mean=1.0)
+          per component. Standard deviation defaults to 0.30 (≈30% variability — captures realistic cost overruns
+          and component-life uncertainty).
+        </p>
 
         <div class="row g-3 mb-3">
           <div class="col-md-3">
-            <label class="form-label">Life Shock Mean</label>
-            <input type="number" class="form-control" name="life_shock_mean" value="0.80" min="0.1" max="2.0" step="0.01" />
-            <div class="form-text">e.g. 0.80 = 20% shorter life</div>
+            <label class="form-label">Cost Mean</label>
+            <input type="number" class="form-control" name="cost_shock_mean" value="1.00" min="0.5" max="5.0" step="0.01" />
+            <div class="form-text">1.00 = current cost is P50. Raise &gt; 1 to bias upward.</div>
           </div>
           <div class="col-md-3">
-            <label class="form-label">Life Shock Std Dev</label>
-            <input type="number" class="form-control" name="life_shock_sigma" value="0.10" min="0.01" max="1.0" step="0.01" />
+            <label class="form-label">Cost Std Dev</label>
+            <input type="number" class="form-control" name="cost_shock_sigma" value="0.30" min="0.01" max="1.0" step="0.01" />
+            <div class="form-text">Arithmetic σ on the cost multiplier (lognormal).</div>
           </div>
           <div class="col-md-3">
-            <label class="form-label">Cost Shock Mean</label>
-            <input type="number" class="form-control" name="cost_shock_mean" value="1.30" min="0.5" max="5.0" step="0.01" />
-            <div class="form-text">e.g. 1.30 = 30% cost increase</div>
+            <label class="form-label">Life Mean</label>
+            <input type="number" class="form-control" name="life_shock_mean" value="1.00" min="0.1" max="2.0" step="0.01" />
+            <div class="form-text">1.00 = engineer's design life is P50.</div>
           </div>
           <div class="col-md-3">
-            <label class="form-label">Cost Shock Std Dev</label>
-            <input type="number" class="form-control" name="cost_shock_sigma" value="0.15" min="0.01" max="1.0" step="0.01" />
+            <label class="form-label">Life Std Dev</label>
+            <input type="number" class="form-control" name="life_shock_sigma" value="0.30" min="0.01" max="1.0" step="0.01" />
+            <div class="form-text">σ on the life multiplier (normal).</div>
           </div>
         </div>
 
         <div class="row g-3 mb-4">
           <div class="col-md-4">
             <label class="form-label">Number of Trials</label>
-            <input type="number" class="form-control" name="num_trials" value="2000" min="100" max="10000" step="100" />
+            <input type="number" class="form-control" name="num_trials" value="1000" min="100" max="10000" step="100" />
           </div>
           <div class="col-md-4">
             <label class="form-label">Forecast Horizon (years)</label>

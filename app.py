@@ -289,7 +289,9 @@ def _email_admin(*, subject: str, body: str, attachments: list) -> bool:
                 subtype="octet-stream",
                 filename=att["filename"],
             )
-        with smtplib.SMTP_SSL(host, port) as server:
+        # 10s connection timeout — without this, Render workers hang for 120s
+        # if outbound SMTP is blocked, then get SIGKILLed → 500 to the user.
+        with smtplib.SMTP_SSL(host, port, timeout=10) as server:
             server.login(sender, password)
             server.send_message(msg)
         return True

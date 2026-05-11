@@ -2,7 +2,10 @@ import csv
 import io
 import json
 import os
+import smtplib
 import tempfile
+from datetime import datetime, timezone
+from email.message import EmailMessage
 
 from flask import (Flask, flash, redirect, render_template,
                    request, send_file, session, url_for)
@@ -191,6 +194,132 @@ def calculate_annual_deterioration(components: list, num_units: int) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Submission persistence — Google Sheets + email-to-admin
+#
+# Both helpers fail soft: if env vars aren't configured (or the call errors),
+# they log a message to stderr and return False. The user still gets the
+# results page either way; this is server-side bookkeeping only.
+# ---------------------------------------------------------------------------
+
+
+def _log_submission_to_sheets(payload: dict) -> bool:
+    """Append one row to the configured Google Sheet.
+
+    Required env vars:
+      GSHEETS_SHEET_ID                 — the spreadsheet ID
+      GSHEETS_SERVICE_ACCOUNT_JSON     — JSON blob of the service account creds
+    Optional:
+      GSHEETS_WORKSHEET                — worksheet/tab name (default "Submissions")
+    """
+    sheet_id = os.environ.get("GSHEETS_SHEET_ID")
+    creds_json = os.environ.get("GSHEETS_SERVICE_ACCOUNT_JSON")
+    if not (sheet_id and creds_json):
+        return False
+
+    try:
+        import gspread
+        from google.oauth2.service_account import Credentials
+    except ImportError:
+        print("[sheets] gspread/google-auth not installed; skipping log")
+        return False
+
+    try:
+        creds_info = json.loads(creds_json)
+    except json.JSONDecodeError as e:
+        print(f"[sheets] could not parse GSHEETS_SERVICE_ACCOUNT_JSON: {e}")
+        return False
+
+    try:
+        scope = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive",
+        ]
+        creds = Credentials.from_service_account_info(creds_info, scopes=scope)
+        client = gspread.authorize(creds)
+        sh = client.open_by_key(sheet_id)
+        ws_name = os.environ.get("GSHEETS_WORKSHEET", "Submissions")
+        try:
+            ws = sh.worksheet(ws_name)
+        except gspread.WorksheetNotFound:
+            ws = sh.add_worksheet(title=ws_name, rows=1000, cols=30)
+
+        existing_headers = ws.row_values(1) if ws.row_count else []
+        if not existing_headers:
+            ws.append_row(list(payload.keys()))
+        ws.append_row([str(v) for v in payload.values()])
+        return True
+    except Exception as e:
+        print(f"[sheets] log failed: {e}")
+        return False
+
+
+def _email_admin(*, subject: str, body: str, attachments: list) -> bool:
+    """Send the admin a notification email with attachments via SMTP.
+
+    Required env vars:
+      ADMIN_EMAIL   — recipient
+      SMTP_USER     — sending account (e.g. Gmail address)
+      SMTP_PASSWORD — Gmail app password (NOT your account password)
+    Optional:
+      SMTP_HOST     — default smtp.gmail.com
+      SMTP_PORT     — default 465 (SSL)
+
+    Each attachment is a dict: {"filename": str, "data": bytes}.
+    """
+    recipient = os.environ.get("ADMIN_EMAIL")
+    sender    = os.environ.get("SMTP_USER")
+    password  = os.environ.get("SMTP_PASSWORD")
+    if not (recipient and sender and password):
+        return False
+
+    host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+    port = int(os.environ.get("SMTP_PORT", "465"))
+
+    try:
+        msg = EmailMessage()
+        msg["From"] = sender
+        msg["To"] = recipient
+        msg["Subject"] = subject
+        msg.set_content(body)
+        for att in attachments or []:
+            msg.add_attachment(
+                att["data"],
+                maintype="application",
+                subtype="octet-stream",
+                filename=att["filename"],
+            )
+        with smtplib.SMTP_SSL(host, port) as server:
+            server.login(sender, password)
+            server.send_message(msg)
+        return True
+    except Exception as e:
+        print(f"[email] send failed: {e}")
+        return False
+
+
+def _kpi_summary_csv_bytes(summary: dict) -> bytes:
+    """Flatten the KPI views into a CSV for email/download."""
+    rows = []
+    for view in ("kpis_total", "kpis_per_unit", "kpis_balance_total",
+                 "kpis_balance_per_unit", "assessment_frequency"):
+        for kpi, stats in summary.get(view, {}).items():
+            rows.append({
+                "view": view,
+                "kpi": kpi,
+                **{k: round(v, 2) for k, v in stats.items()},
+            })
+    if not rows:
+        return b""
+    buf = io.StringIO()
+    fieldnames = ["view", "kpi"] + sorted({k for r in rows for k in r if k not in ("view", "kpi")})
+    writer = csv.DictWriter(buf, fieldnames=fieldnames)
+    writer.writeheader()
+    for r in rows:
+        writer.writerow(r)
+    return buf.getvalue().encode("utf-8")
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -240,6 +369,22 @@ def run():
     if not components:
         flash("No valid components found. Check that the CSV has the required columns and at least one budgeted component.")
         return redirect(url_for("index"))
+
+    # Capture the user's uploaded CSV bytes for later (email attachment, audit
+    # trail). parse_reserve_csv consumed the stream, so seek back to the start.
+    try:
+        reserve_csv.seek(0)
+        user_csv_bytes = reserve_csv.read()
+        user_csv_filename = reserve_csv.filename or "reserve_study.csv"
+    except Exception:
+        user_csv_bytes = b""
+        user_csv_filename = "reserve_study.csv"
+
+    # Submitter identity (optional fields — added to the form for tracking who
+    # ran the analysis; safe to leave blank if you haven't added them to index.html yet)
+    property_name = (request.form.get("property_name")  or "").strip()
+    contact_name  = (request.form.get("contact_name")   or "").strip()
+    contact_email = (request.form.get("contact_email")  or "").strip()
 
     try:
         num_units           = int(request.form["num_units"])
@@ -348,6 +493,79 @@ def run():
     json.dump(summary, tmp)
     tmp.close()
     session["summary_path"] = tmp.name
+
+    # ---- Submission logging + email-to-admin ----
+    # Both calls fail-soft if env vars aren't configured; the user still
+    # sees the results page regardless.
+    timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    def _kpi(view: str, name: str, stat: str = "p50"):
+        try:
+            return summary[view][name][stat]
+        except (KeyError, TypeError):
+            return ""
+
+    log_payload = {
+        "timestamp_utc":             timestamp,
+        "property_name":             property_name,
+        "contact_name":              contact_name,
+        "contact_email":             contact_email,
+        "property_type":             property_type,
+        "num_units":                 num_units,
+        "starting_reserve":          starting_reserve,
+        "annual_contribution":       annual_contribution,
+        "horizon":                   horizon,
+        "num_trials":                num_trials,
+        "life_shock_mean":           life_shock_mean,
+        "life_shock_sigma":          life_shock_sigma,
+        "cost_shock_mean":           cost_shock_mean,
+        "cost_shock_sigma":          cost_shock_sigma,
+        "inflation_rate":            inflation_rate,
+        "interest_rate":             interest_rate,
+        "contribution_growth":       contribution_growth,
+        "components_loaded":         len(components),
+        "user_csv_filename":         user_csv_filename,
+        "median_yr_1_5":             _kpi("kpis_total", "assessment_yr_1_5"),
+        "median_yr_6_10":            _kpi("kpis_total", "assessment_yr_6_10"),
+        "median_total_assessment":   _kpi("kpis_total", "assessment_total"),
+        "median_per_unit_total":     _kpi("kpis_per_unit", "assessment_total"),
+    }
+    sheets_ok = _log_submission_to_sheets(log_payload)
+
+    body = (
+        f"Reserve Study Stress Test — new submission\n\n"
+        f"Timestamp:    {timestamp}\n"
+        f"Property:     {property_name or '(unspecified)'}\n"
+        f"Contact:      {contact_name or '(unspecified)'} <{contact_email or 'no-email'}>\n"
+        f"Property Type:{property_type}\n\n"
+        f"Inputs:\n"
+        f"  {num_units} units, ${starting_reserve:,.0f} starting reserve, "
+        f"${annual_contribution:,.0f}/yr contribution\n"
+        f"  Horizon: {horizon} yrs   Trials: {num_trials:,}\n"
+        f"  Life shock:   N({life_shock_mean:.2f}, {life_shock_sigma:.2f})\n"
+        f"  Cost shock:   Lognorm(mean={cost_shock_mean:.2f}, sigma={cost_shock_sigma:.2f})\n"
+        f"  Inflation: {inflation_rate:.1%}   Interest: {interest_rate:.1%}   "
+        f"Contribution growth: {contribution_growth:.1%}\n\n"
+        f"Median KPIs:\n"
+        f"  Yr 1-5 assessment:    {log_payload['median_yr_1_5']}\n"
+        f"  Yr 6-10 assessment:   {log_payload['median_yr_6_10']}\n"
+        f"  Total horizon:        {log_payload['median_total_assessment']}\n"
+        f"  Per-unit total:       {log_payload['median_per_unit_total']}\n\n"
+        f"Components loaded: {len(components)}\n"
+        f"Sheet logged: {'yes' if sheets_ok else 'no (not configured or failed)'}\n"
+    )
+    attachments = [
+        {"filename": user_csv_filename, "data": user_csv_bytes},
+        {"filename": "stress_test_kpis.csv", "data": _kpi_summary_csv_bytes(summary)},
+        {"filename": "stress_test_results.json",
+         "data": json.dumps(summary, indent=2).encode("utf-8")},
+    ]
+    _email_admin(
+        subject=f"[RFS Stress Test] {property_name or 'New submission'}"
+                + (f" — {contact_email}" if contact_email else ""),
+        body=body,
+        attachments=attachments,
+    )
 
     return render_template("results.html", summary=summary)
 

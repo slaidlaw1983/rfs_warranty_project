@@ -53,6 +53,24 @@
 
       <form action="/run" method="POST" enctype="multipart/form-data" id="stress-form">
 
+        <!-- Submitter Info -->
+        <p class="section-label">Your Information</p>
+        <div class="row g-3 mb-4">
+          <div class="col-md-12">
+            <label class="form-label">Property Name</label>
+            <input type="text" class="form-control" name="property_name" placeholder="e.g. Canmore Gardens" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Your Name</label>
+            <input type="text" class="form-control" name="contact_name" placeholder="Jane Smith" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Your Email</label>
+            <input type="email" class="form-control" name="contact_email" placeholder="you@example.com" />
+            <div class="form-text">Used to identify your submission. We'll save your inputs and results.</div>
+          </div>
+        </div>
+
         <!-- Reserve Study -->
         <p class="section-label">Reserve Study</p>
         <div class="mb-4">

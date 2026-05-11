@@ -1,4 +1,5 @@
 .env
+.env.local
 .DS_Store
 __pycache__/
 *.pyc
@@ -7,3 +8,24 @@ __pycache__/
 *.xlsx
 *.pdf
 .claude/
+
+# Secrets
+*.pem
+*.key
+service-account*.json
+
+# Python envs
+.venv/
+venv/
+env/
+
+# Local stress-test CLI artifacts (not server outputs)
+rfs_calculator_results.json
+rfs_calculator_summary.csv
+stress_test_results.json
+stress_test_kpi_summary.csv
+
+# Editors
+.vscode/
+.idea/
+*.swp

@@ -32,13 +32,15 @@ def calculate_warranty_risk_analysis(raw_trials: dict,
                                       warranty_term_years: int = 5,
                                       target_loss_ratio: float = 0.50) -> dict:
     """
-    Use the stress test trial outcomes to evaluate warranty risk at given target terms.
+    Use UNBIASED Monte Carlo trial outcomes to evaluate warranty risk.
 
-    For each trial, compute the warranty payout as min(trial_assessment, coverage_cap).
-    Average across trials to get expected payout. Compare to total premium over the term.
+    Premium model: ONE-TIME premium paid at time of RFS, covers the full
+    warranty term. Premium = standard_price × premium_markup_pct.
+
+    Payout model: lump sum (coverage − deductible) on any special assessment
+    occurring within the warranty term. Probability of payout = P(any assessment
+    in the term) from the unbiased Monte Carlo (mean cost/life multipliers = 1.0).
     """
-    import statistics
-
     # Pick the trial array matching the warranty term
     if warranty_term_years == 5:
         trials = raw_trials.get("assessment_yr_1_5", [])
@@ -51,22 +53,18 @@ def calculate_warranty_risk_analysis(raw_trials: dict,
         return None
 
     coverage = coverage_per_unit * num_units
-    annual_premium = standard_price * premium_markup_pct
-    term_premium = annual_premium * warranty_term_years
+    # Warranty premium is paid ONCE upfront and covers the entire term.
+    warranty_premium = standard_price * premium_markup_pct
     deductible = coverage * 0.10
 
-    # Lump-sum payout model: on ANY special assessment within the warranty term,
-    # warranty pays out (coverage − deductible). Probability of payout is the
-    # claim probability from the stress test (normal-life × lognormal-cost shocks).
     payout_per_claim   = max(0.0, coverage - deductible)
     claim_count        = sum(1 for t in trials if t > 0)
     claim_probability  = claim_count / len(trials)
     expected_payout    = payout_per_claim * claim_probability
 
-    # Reference: mean of actual modeled assessments (uncapped, gross of deductible)
     expected_assessment_uncapped = sum(trials) / len(trials)
 
-    actual_loss_ratio = expected_payout / term_premium if term_premium > 0 else 0.0
+    actual_loss_ratio = expected_payout / warranty_premium if warranty_premium > 0 else 0.0
 
     # Verdict colour
     if actual_loss_ratio <= 0.30:
@@ -109,25 +107,21 @@ def calculate_warranty_risk_analysis(raw_trials: dict,
             f"address contribution levels before considering warranty."
         )
 
-    # Custom quote — what premium would hit the target loss ratio?
+    # Custom quote — what one-time premium would hit the target loss ratio?
     custom_quote = None
     if eligibility != "eligible" and expected_payout > 0:
-        required_term_premium  = expected_payout / target_loss_ratio
-        required_annual_premium = required_term_premium / warranty_term_years
-        # Premium TIER multiplier (Standard + warranty) vs Standard alone
-        # e.g. 1.78× means total Premium tier price is 1.78 × Standard
+        required_premium = expected_payout / target_loss_ratio
         required_premium_tier_mult = (
-            (standard_price + required_annual_premium) / standard_price
+            (standard_price + required_premium) / standard_price
             if standard_price else 0.0
         )
         custom_quote = {
-            "required_annual_premium":     round(required_annual_premium, 0),
-            "required_term_premium":       round(required_term_premium, 0),
+            "required_premium":            round(required_premium, 0),
             "required_premium_tier_mult":  round(required_premium_tier_mult, 2),
             "default_premium_tier_mult":   round(1.0 + premium_markup_pct, 2),
             "premium_increase_pct":        round(
-                (required_annual_premium - annual_premium) / annual_premium, 2
-            ) if annual_premium > 0 else 0.0,
+                (required_premium - warranty_premium) / warranty_premium, 2
+            ) if warranty_premium > 0 else 0.0,
         }
 
     return {
@@ -137,8 +131,7 @@ def calculate_warranty_risk_analysis(raw_trials: dict,
             "coverage_total":       coverage,
             "deductible":           deductible,
             "premium_markup_pct":   premium_markup_pct,
-            "annual_premium":       annual_premium,
-            "term_premium":         term_premium,
+            "warranty_premium":     warranty_premium,
             "target_loss_ratio":    target_loss_ratio,
         },
         "stress_results": {
@@ -467,8 +460,27 @@ def run():
             basic_price = BASIC_PRICES["Apartment"][idx]
         standard_price = _round_to_50(basic_price * STANDARD_MARKUP)
 
+        # Run a SECOND Monte Carlo pass with UNBIASED multiplier means (1.0) for
+        # the warranty risk analysis. The main stress test above uses the user's
+        # stressed means; the warranty analysis needs the unconditional probability.
+        # Variance (sigma) is kept the same so natural variability still applies.
+        print("Running unbiased MC for warranty analysis...")
+        neutral_summary = st.run_stress_test(
+            components=components,
+            num_trials=1000,
+            starting_reserve=starting_reserve,
+            annual_contribution=annual_contribution,
+            num_units=num_units,
+            horizon=horizon,
+            seed=99,                          # different seed from main run
+            life_shock_mean=1.0,              # unbiased: no shift
+            life_shock_sigma=life_shock_sigma,
+            cost_shock_mean=1.0,              # unbiased: no shift
+            cost_shock_sigma=cost_shock_sigma,
+        )
+
         summary["warranty_analysis"] = calculate_warranty_risk_analysis(
-            raw_trials=summary.get("raw_trials", {}),
+            raw_trials=neutral_summary.get("raw_trials", {}),
             num_units=num_units,
             standard_price=standard_price,
             coverage_per_unit=500.0,
@@ -476,8 +488,15 @@ def run():
             warranty_term_years=5,
             target_loss_ratio=0.50,
         )
-        summary["warranty_analysis"]["property_type_used"] = property_type
-        summary["warranty_analysis"]["standard_price_used"] = standard_price
+        if summary["warranty_analysis"]:
+            summary["warranty_analysis"]["property_type_used"] = property_type
+            summary["warranty_analysis"]["standard_price_used"] = standard_price
+            # Note the methodology in the summary for transparency
+            summary["warranty_analysis"]["methodology_note"] = (
+                f"Probability computed from {neutral_summary['config']['num_trials']} "
+                f"unbiased Monte Carlo trials (cost mean=1.0, life mean=1.0). "
+                f"Variability sigmas: life σ={life_shock_sigma}, cost σ={cost_shock_sigma}."
+            )
     except Exception as e:
         print(f"Warranty analysis failed: {e}")
         summary["warranty_analysis"] = None

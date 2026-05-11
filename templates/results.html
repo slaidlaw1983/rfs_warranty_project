@@ -92,13 +92,14 @@
           <div class="text-muted small fw-semibold">TARGET TERMS</div>
         </div>
         <div class="col-md-3">
-          <div class="text-muted small">Annual Warranty Premium</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(t.annual_premium) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">{{ "{:.0%}".format(t.premium_markup_pct) }} × Standard</div>
+          <div class="text-muted small">Warranty Premium</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(t.warranty_premium) }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">one-time, covers {{ t.warranty_term_years }} yrs</div>
         </div>
         <div class="col-md-3">
-          <div class="text-muted small">{{ t.warranty_term_years }}-Year Total Premium</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(t.term_premium) }}</div>
+          <div class="text-muted small">Premium Markup</div>
+          <div class="fw-semibold fs-5">{{ "{:.0%}".format(t.premium_markup_pct) }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">× Standard, paid upfront</div>
         </div>
         <div class="col-md-3">
           <div class="text-muted small">Coverage / Deductible</div>
@@ -115,9 +116,9 @@
       <div class="row g-3 mb-3 text-center border-bottom pb-3">
         <div class="col-12">
           <div class="text-muted small fw-semibold">
-            FROM {{ s.n_trials }} STRESS-TEST TRIALS
+            FROM {{ s.n_trials }} UNBIASED MONTE CARLO TRIALS
             <span class="text-muted" style="font-size:0.7rem; font-weight:400;">
-              (normal life shock × lognormal cost shock)
+              (cost ~ Lognormal(1.0, σ), life ~ Normal(1.0, σ) — no shifted means)
             </span>
           </div>
         </div>
@@ -148,7 +149,7 @@
         <div class="col-md-4 text-center">
           <div class="text-muted small">Actual Loss Ratio</div>
           <div class="fw-bold display-6 text-{{ verdict_color }}">{{ "{:.0%}".format(wa.actual_loss_ratio) }}</div>
-          <div class="text-muted small">Expected payout ÷ {{ t.warranty_term_years }}-yr premium</div>
+          <div class="text-muted small">Expected payout ÷ one-time premium</div>
         </div>
         <div class="col-md-8">
           <div class="alert alert-{{ verdict_color }} mb-0">
@@ -160,7 +161,7 @@
               {% endif %}
             </strong> — {{ wa.verdict_label }}
             <div class="mt-2 small">
-              At target terms, expected payout is ${{ "{:,.0f}".format(s.expected_payout) }} ({{ "{:.1%}".format(s.claim_probability) }} × ${{ "{:,.0f}".format(s.payout_per_claim) }}) against premium of ${{ "{:,.0f}".format(t.term_premium) }} (loss ratio {{ "{:.1%}".format(wa.actual_loss_ratio) }}).
+              At target terms, expected payout is ${{ "{:,.0f}".format(s.expected_payout) }} ({{ "{:.1%}".format(s.claim_probability) }} × ${{ "{:,.0f}".format(s.payout_per_claim) }}) against one-time premium of ${{ "{:,.0f}".format(t.warranty_premium) }} (loss ratio {{ "{:.1%}".format(wa.actual_loss_ratio) }}).
             </div>
           </div>
         </div>
@@ -191,9 +192,9 @@
               </div>
               <div class="row g-2">
                 <div class="col-md-4">
-                  <div class="text-muted small">Required Annual Premium</div>
-                  <div class="fw-semibold fs-5">${{ "{:,.0f}".format(wa.custom_quote.required_annual_premium) }}</div>
-                  <div class="text-muted" style="font-size:0.72rem;">vs. ${{ "{:,.0f}".format(t.annual_premium) }} at standard markup</div>
+                  <div class="text-muted small">Required One-Time Premium</div>
+                  <div class="fw-semibold fs-5">${{ "{:,.0f}".format(wa.custom_quote.required_premium) }}</div>
+                  <div class="text-muted" style="font-size:0.72rem;">vs. ${{ "{:,.0f}".format(t.warranty_premium) }} at standard markup</div>
                 </div>
                 <div class="col-md-4">
                   <div class="text-muted small">Required Premium Tier</div>

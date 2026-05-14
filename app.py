@@ -310,28 +310,6 @@ def _email_admin(*, subject: str, body: str, attachments: list) -> bool:
         return False
 
 
-def _kpi_summary_csv_bytes(summary: dict) -> bytes:
-    """Flatten the KPI views into a CSV for email/download."""
-    rows = []
-    for view in ("kpis_total", "kpis_per_unit", "kpis_balance_total",
-                 "kpis_balance_per_unit", "assessment_frequency"):
-        for kpi, stats in summary.get(view, {}).items():
-            rows.append({
-                "view": view,
-                "kpi": kpi,
-                **{k: round(v, 2) for k, v in stats.items()},
-            })
-    if not rows:
-        return b""
-    buf = io.StringIO()
-    fieldnames = ["view", "kpi"] + sorted({k for r in rows for k in r if k not in ("view", "kpi")})
-    writer = csv.DictWriter(buf, fieldnames=fieldnames)
-    writer.writeheader()
-    for r in rows:
-        writer.writerow(r)
-    return buf.getvalue().encode("utf-8")
-
-
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -556,19 +534,25 @@ def download_csv():
         summary = json.load(f)
 
     rows = []
-    for view in ("kpis_total", "kpis_per_unit", "kpis_balance_total", "kpis_balance_per_unit", "assessment_frequency"):
-        for kpi, stats in summary.get(view, {}).items():
-            rows.append({
-                "view": view,
-                "kpi": kpi,
-                **{k: round(v, 2) for k, v in stats.items()},
-            })
+    for model in ("base", "full"):
+        m = summary.get(model, {}) or {}
+        prob = m.get("prob_assessment", {})
+        med  = m.get("median_total_assessment", {})
+        rows.append({
+            "funding_model":            model,
+            "p_sa_yr_1_5":              round(prob.get("yr_1_5", 0.0), 4),
+            "p_sa_yr_1_10":             round(prob.get("yr_1_10", 0.0), 4),
+            "p_sa_yr_30":               round(prob.get("yr_30", 0.0), 4),
+            "median_total_assessment":  round(med.get("total", 0.0), 0),
+            "median_per_unit":          round(med.get("per_unit", 0.0), 0),
+            "median_n_assessment_yrs":  round(m.get("median_n_assessment_years", 0.0), 1),
+            "funding_ratio":            (summary.get("deterioration", {})
+                                                 .get("funding_ratio", {})
+                                                 .get(model)),
+        })
 
     buf = io.StringIO()
-    writer = csv.DictWriter(
-        buf,
-        fieldnames=["view", "kpi", "mean", "p25", "p50", "p75", "p90", "p95"],
-    )
+    writer = csv.DictWriter(buf, fieldnames=list(rows[0].keys()))
     writer.writeheader()
     writer.writerows(rows)
 

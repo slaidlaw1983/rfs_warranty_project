@@ -15,7 +15,6 @@ load_dotenv()
 
 import stress_test as st
 from csv_parser import parse_reserve_csv
-from projection import build_yearly_schedule, build_financial_projection
 from pricing import (PROPERTY_TYPES, UNIT_BRACKETS, get_pricing,
                      get_full_pricing_table)
 

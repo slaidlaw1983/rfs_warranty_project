@@ -528,5 +528,29 @@ def portfolio_route():
                            just_saved=request.args.get("just_saved"))
 
 
+@app.route("/portfolio/<policy_id>/approve", methods=["POST"])
+def portfolio_approve(policy_id):
+    ok = policies.update_policy_status(policy_id, "approved")
+    if not ok:
+        flash(f"Could not approve policy {policy_id} — not found or Sheet not configured.")
+    return redirect(url_for("portfolio_route"))
+
+
+@app.route("/portfolio/<policy_id>/reject", methods=["POST"])
+def portfolio_reject(policy_id):
+    ok = policies.update_policy_status(policy_id, "rejected")
+    if not ok:
+        flash(f"Could not reject policy {policy_id} — not found or Sheet not configured.")
+    return redirect(url_for("portfolio_route"))
+
+
+@app.route("/portfolio/<policy_id>/delete", methods=["POST"])
+def portfolio_delete(policy_id):
+    ok = policies.delete_policy(policy_id)
+    if not ok:
+        flash(f"Could not delete policy {policy_id} — not found or Sheet not configured.")
+    return redirect(url_for("portfolio_route"))
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=8081)

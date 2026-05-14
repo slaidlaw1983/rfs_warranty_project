@@ -119,8 +119,7 @@ class FakeWorksheet:
                     class _Cell:
                         def __init__(s, row, col): s.row = row; s.col = col
                     return _Cell(r_idx, c_idx)
-        from gspread.exceptions import CellNotFound
-        raise CellNotFound(f"{value} not found")
+        raise ValueError(f"{value} not found")
 
 
 def _ws(rows=None):

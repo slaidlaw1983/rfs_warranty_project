@@ -229,10 +229,10 @@ def run_stress_test(components: List[Dict[str, Any]],
                     num_units: int = 1,
                     horizon: int = 30,
                     seed: int = 42,
-                    life_shock_mean: float = LIFE_SHOCK_MEAN,
-                    life_shock_sigma: float = LIFE_SHOCK_SIGMA,
-                    cost_shock_mean: float = COST_SHOCK_MEAN,
-                    cost_shock_sigma: float = COST_SHOCK_SIGMA) -> Dict[str, Any]:
+                    life_shock_mean: float = 1.0,
+                    life_shock_sigma: float = 0.30,
+                    cost_shock_mean: float = 1.0,
+                    cost_shock_sigma: float = 0.30) -> Dict[str, Any]:
     """Run num_trials Monte Carlo trials of the 30-year forecast.
 
     Each trial: sample cost (lognormal mean=1.0) and life (normal mean=1.0)

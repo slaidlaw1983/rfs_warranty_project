@@ -261,12 +261,8 @@
                   <div class="fw-semibold">${{ "{:,.0f}".format(wa.stress_results.payout_per_unit) }}</div>
                 </div>
 
-                <div class="col-6">
-                  <div class="text-muted small">Expected payout</div>
-                  <div class="fw-semibold">${{ "{:,.0f}".format(wa.stress_results.expected_payout) }}</div>
-                </div>
-                <div class="col-6">
-                  <div class="text-muted small">Loss ratio</div>
+                <div class="col-12">
+                  <div class="text-muted small">Loss ratio (modeled exposure ÷ premium)</div>
                   <div class="fw-semibold">{{ "{:.0%}".format(wa.loss_ratio_displayed) }}</div>
                 </div>
               </div>

@@ -5,30 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stress Test Results</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     body { background: #f4f6f9; }
     .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
     .card-header { background: #1a3a5c; color: #fff; border-radius: 12px 12px 0 0 !important; }
-    .card-header.green { background: #1e6b3c; }
+    .card-header.gold { background: #b8860b; }
     .btn-primary { background: #1a3a5c; border-color: #1a3a5c; }
     .btn-success { background: #1e6b3c; border-color: #1e6b3c; }
-    .btn-success:hover { background: #185832; border-color: #185832; }
-    .kpi-table th { background: #D9E1F2; font-size: 0.82rem; white-space: nowrap; }
-    .kpi-table td { font-size: 0.88rem; }
-    .kpi-label { font-weight: 500; font-size: 0.85rem; }
+    .kpi-table th { background: #D9E1F2; font-size: 0.85rem; }
+    .kpi-table td { font-size: 0.9rem; }
+    .scenario-col-base { background: #f0f6fb; }
+    .scenario-col-full { background: #e0ecf6; }
   </style>
 </head>
 <body>
-<div class="container py-5" style="max-width: 1100px;">
+<div class="container py-5" style="max-width: 1200px;">
 
   <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
     <div>
       <h2 class="fw-bold mb-0" style="color:#1a3a5c;">Stress Test Results</h2>
       <p class="text-muted mb-0">
         {{ summary.components_loaded }} components &middot;
-        {{ summary.config.num_trials | int }} trials &middot;
-        {{ summary.config.forecast_horizon_years }} yr horizon
+        {{ summary.config.num_trials }} Monte Carlo trials &middot;
+        {{ summary.config.horizon }} yr horizon
       </p>
     </div>
     <div class="d-flex gap-2">
@@ -37,7 +37,7 @@
     </div>
   </div>
 
-  <!-- Configuration Summary -->
+  <!-- 1. Configuration -->
   <div class="card mb-4">
     <div class="card-header py-2"><h6 class="mb-0">Configuration</h6></div>
     <div class="card-body py-3 px-4">
@@ -48,568 +48,249 @@
         </div>
         <div class="col-md-2 col-6">
           <div class="text-muted small">Opening Reserve</div>
-          <div class="fw-semibold">${{ "{:,.0f}".format(summary.config.starting_reserve_total) }}</div>
+          <div class="fw-semibold">${{ "{:,.0f}".format(summary.config.starting_reserve) }}</div>
         </div>
         <div class="col-md-2 col-6">
-          <div class="text-muted small">Annual Contribution</div>
-          <div class="fw-semibold">${{ "{:,.0f}".format(summary.config.annual_contribution_total) }}</div>
+          <div class="text-muted small">Base Contribution</div>
+          <div class="fw-semibold">${{ "{:,.0f}".format(summary.config.base_contribution) }}/yr</div>
         </div>
         <div class="col-md-2 col-6">
-          <div class="text-muted small">Life Shock</div>
-          <div class="fw-semibold">&times;{{ summary.config.life_shock_mean }} (&sigma; {{ summary.config.life_shock_sigma }})</div>
+          <div class="text-muted small">Full Funding</div>
+          <div class="fw-semibold">${{ "{:,.0f}".format(summary.config.full_funding_contribution) }}/yr</div>
         </div>
         <div class="col-md-2 col-6">
-          <div class="text-muted small">Cost Shock</div>
-          <div class="fw-semibold">&times;{{ summary.config.cost_shock_mean }} (&sigma; {{ summary.config.cost_shock_sigma }})</div>
+          <div class="text-muted small">Inflation</div>
+          <div class="fw-semibold">{{ "{:.1%}".format(summary.config.inflation_rate) }}</div>
         </div>
         <div class="col-md-2 col-6">
-          <div class="text-muted small">Reserve / Unit</div>
-          <div class="fw-semibold">${{ "{:,.0f}".format(summary.config.starting_reserve_per_unit) }}</div>
+          <div class="text-muted small">Interest</div>
+          <div class="fw-semibold">{{ "{:.1%}".format(summary.config.interest_rate) }}</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Warranty Risk Analysis -->
-  {% if summary.warranty_analysis %}
-  {% set wa = summary.warranty_analysis %}
-  {% set t = wa.target_terms %}
-  {% set s = wa.stress_results %}
-  {% set verdict_color = {'highly_profitable':'success','on_target':'success','marginal':'warning','underpriced':'danger'}[wa.verdict] %}
+  <!-- 2. Forecast Chart -->
   <div class="card mb-4">
-    <div class="card-header py-2 d-flex justify-content-between align-items-center" style="background:#b8860b;">
-      <h6 class="mb-0 text-white">Warranty Risk Analysis</h6>
-      <small class="text-white-50">
-        {{ wa.property_type_used }} · Standard ${{ "{:,.0f}".format(wa.standard_price_used) }} ·
-        {{ t.warranty_term_years }}-year warranty
-      </small>
-    </div>
+    <div class="card-header py-2"><h6 class="mb-0">30-Year Forecast (P50)</h6></div>
     <div class="card-body">
-
-      <!-- Target Terms -->
-      <div class="row g-3 mb-3 text-center border-bottom pb-3">
-        <div class="col-12">
-          <div class="text-muted small fw-semibold">TARGET TERMS</div>
-        </div>
-        <div class="col-md-3">
-          <div class="text-muted small">Warranty Premium</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(t.warranty_premium) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">one-time, covers {{ t.warranty_term_years }} yrs</div>
-        </div>
-        <div class="col-md-3">
-          <div class="text-muted small">Premium Markup</div>
-          <div class="fw-semibold fs-5">{{ "{:.0%}".format(t.premium_markup_pct) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">× Standard, paid upfront</div>
-        </div>
-        <div class="col-md-3">
-          <div class="text-muted small">Coverage / Deductible</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(t.coverage_total) }} / ${{ "{:,.0f}".format(t.deductible) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">${{ "{:,.0f}".format(t.coverage_per_unit) }} / unit</div>
-        </div>
-        <div class="col-md-3">
-          <div class="text-muted small">Target Max Loss Ratio</div>
-          <div class="fw-semibold fs-5">{{ "{:.0%}".format(t.target_loss_ratio) }}</div>
-        </div>
-      </div>
-
-      <!-- Modeled Results -->
-      <div class="row g-3 mb-3 text-center border-bottom pb-3">
-        <div class="col-12">
-          <div class="text-muted small fw-semibold">
-            FROM {{ s.n_trials }} MONTE CARLO TRIALS
-            <span class="text-muted" style="font-size:0.7rem; font-weight:400;">
-              (P50-centered: cost ~ Lognormal, life ~ Normal — same MC as KPIs below)
-            </span>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="text-muted small">P(Special Assessment)</div>
-          <div class="fw-semibold fs-5">{{ "{:.1%}".format(s.claim_probability) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">at least one assessment in {{ t.warranty_term_years }}-yr term</div>
-        </div>
-        <div class="col-md-3">
-          <div class="text-muted small">Lump-Sum Payout per Claim</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.payout_per_claim) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">coverage minus deductible</div>
-        </div>
-        <div class="col-md-3">
-          <div class="text-muted small">Expected Payout</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.expected_payout) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">P(claim) × payout</div>
-        </div>
-        <div class="col-md-3">
-          <div class="text-muted small">Mean Modeled Assessment</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(s.mean_assessment_uncapped) }}</div>
-          <div class="text-muted" style="font-size:0.72rem;">avg actual assessment, gross</div>
-        </div>
-      </div>
-
-      <!-- Verdict -->
-      <div class="row align-items-center mb-3">
-        <div class="col-md-4 text-center">
-          <div class="text-muted small">Actual Loss Ratio</div>
-          <div class="fw-bold display-6 text-{{ verdict_color }}">{{ "{:.0%}".format(wa.actual_loss_ratio) }}</div>
-          <div class="text-muted small">Expected payout ÷ one-time premium</div>
-        </div>
-        <div class="col-md-8">
-          <div class="alert alert-{{ verdict_color }} mb-0">
-            <strong>
-              {% if wa.verdict == 'highly_profitable' %}✓ Highly profitable
-              {% elif wa.verdict == 'on_target' %}✓ On target
-              {% elif wa.verdict == 'marginal' %}⚠ Marginal
-              {% else %}✗ Underpriced
-              {% endif %}
-            </strong> — {{ wa.verdict_label }}
-            <div class="mt-2 small">
-              At target terms, expected payout is ${{ "{:,.0f}".format(s.expected_payout) }} ({{ "{:.1%}".format(s.claim_probability) }} × ${{ "{:,.0f}".format(s.payout_per_claim) }}) against one-time premium of ${{ "{:,.0f}".format(t.warranty_premium) }} (loss ratio {{ "{:.1%}".format(wa.actual_loss_ratio) }}).
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Eligibility & Custom Quote -->
-      <div class="border-top pt-3">
-        <div class="row align-items-center">
-          <div class="col-md-4 text-center">
-            <div class="text-muted small mb-1">Underwriting Decision</div>
-            <div class="badge bg-{{ wa.eligibility.color }} fs-6 px-3 py-2 mb-1">
-              {% if wa.eligibility.decision == 'eligible' %}✓ ELIGIBLE
-              {% elif wa.eligibility.decision == 'conditional' %}⚠ CONDITIONAL
-              {% else %}✗ DECLINE
-              {% endif %}
-            </div>
-            <div class="fw-semibold mt-1">{{ wa.eligibility.label }}</div>
-          </div>
-          <div class="col-md-8">
-            <div class="text-muted small">{{ wa.eligibility.reason }}</div>
-
-            {% if wa.custom_quote %}
-            <div class="mt-3 p-3 rounded" style="background:#fff3cd; border:1px solid #ffe69c;">
-              <div class="fw-semibold mb-2" style="color:#856404;">
-                {% if wa.eligibility.decision == 'conditional' %}Custom Quote Recommendation
-                {% else %}Reference: Required Premium to Break Even
-                {% endif %}
-              </div>
-              <div class="row g-2">
-                <div class="col-md-4">
-                  <div class="text-muted small">Required One-Time Premium</div>
-                  <div class="fw-semibold fs-5">${{ "{:,.0f}".format(wa.custom_quote.required_premium) }}</div>
-                  <div class="text-muted" style="font-size:0.72rem;">vs. ${{ "{:,.0f}".format(t.warranty_premium) }} at standard markup</div>
-                </div>
-                <div class="col-md-4">
-                  <div class="text-muted small">Required Premium Tier</div>
-                  <div class="fw-semibold fs-5">{{ "{:.2f}".format(wa.custom_quote.required_premium_tier_mult) }}× Standard</div>
-                  <div class="text-muted" style="font-size:0.72rem;">vs. {{ "{:.2f}".format(wa.custom_quote.default_premium_tier_mult) }}× at standard pricing</div>
-                </div>
-                <div class="col-md-4">
-                  <div class="text-muted small">Premium Increase Needed</div>
-                  <div class="fw-semibold fs-5">+{{ "{:.0%}".format(wa.custom_quote.premium_increase_pct) }}</div>
-                  <div class="text-muted" style="font-size:0.72rem;">to hit {{ "{:.0%}".format(t.target_loss_ratio) }} loss ratio target</div>
-                </div>
-              </div>
-              {% if wa.eligibility.decision == 'decline' %}
-              <div class="mt-2 small" style="color:#856404;">
-                <em>This quote is shown for reference only. The required premium is impractical for this property's risk profile — recommend the board increase contributions before re-quoting.</em>
-              </div>
-              {% endif %}
-            </div>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %}
-
-  {% set kpi_labels = [
-    ("assessment_yr_1_5",    "Special Assessment — Years 1–5"),
-    ("assessment_yr_6_10",   "Special Assessment — Years 6–10"),
-    ("assessment_yr_1_10",   "Special Assessment — Years 1–10"),
-    ("assessment_30yr_total","Special Assessment — 30yr Total")
-  ] %}
-
-  <!-- KPI Tables -->
-  <div class="row g-4 mb-4">
-
-    <!-- Total $ -->
-    <div class="col-lg-6">
-      <div class="card h-100">
-        <div class="card-header py-2"><h6 class="mb-0">Special Assessments — Total ($)</h6></div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0 kpi-table">
-              <thead>
-                <tr>
-                  <th>KPI</th>
-                  <th class="text-end">Mean</th><th class="text-end">P25</th>
-                  <th class="text-end">P50</th><th class="text-end">P75</th>
-                  <th class="text-end">P90</th><th class="text-end">P95</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for key, label in kpi_labels %}
-                  {% if key in summary.kpis_total %}
-                  {% set s = summary.kpis_total[key] %}
-                  <tr>
-                    <td class="kpi-label">{{ label }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.mean) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p25) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p50) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p75) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p90) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p95) }}</td>
-                  </tr>
-                  {% endif %}
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Per Unit $ -->
-    <div class="col-lg-6">
-      <div class="card h-100">
-        <div class="card-header py-2"><h6 class="mb-0">Special Assessments — Per Unit ($)</h6></div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0 kpi-table">
-              <thead>
-                <tr>
-                  <th>KPI</th>
-                  <th class="text-end">Mean</th><th class="text-end">P25</th>
-                  <th class="text-end">P50</th><th class="text-end">P75</th>
-                  <th class="text-end">P90</th><th class="text-end">P95</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for key, label in kpi_labels %}
-                  {% if key in summary.kpis_per_unit %}
-                  {% set s = summary.kpis_per_unit[key] %}
-                  <tr>
-                    <td class="kpi-label">{{ label }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.mean) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p25) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p50) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p75) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p90) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p95) }}</td>
-                  </tr>
-                  {% endif %}
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      <canvas id="forecast-chart" height="100"></canvas>
     </div>
   </div>
 
-  <!-- Property Deterioration -->
+  <!-- 3. KPI Comparison -->
   <div class="card mb-4">
-    <div class="card-header py-2"><h6 class="mb-0">Property Deterioration (Unstressed)</h6></div>
-    <div class="card-body">
-      <div class="row g-3 mb-3 text-center">
-        <div class="col-md-3 col-6">
-          <div class="text-muted small">Total Annual Deterioration</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(summary.deterioration.total_annual) }}</div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="text-muted small">Annual Deterioration / Unit</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(summary.deterioration.per_unit_annual) }}</div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="text-muted small">Contribution / Deterioration</div>
-          {% set fr = summary.deterioration.funding_ratio %}
-          <div class="fw-semibold fs-5 {% if fr < 0.8 %}text-danger{% elif fr < 1.0 %}text-warning{% else %}text-success{% endif %}">
-            {{ "{:.2f}×".format(fr) if fr else "N/A" }}
-          </div>
-          <div class="text-muted" style="font-size:0.72rem;">
-            {% if fr and fr >= 1.0 %}contributions exceed deterioration rate
-            {% elif fr %}contributions trail deterioration rate
-            {% endif %}
-          </div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="text-muted small">Contribution / Unit / Year</div>
-          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(summary.config.annual_contribution_per_unit) }}</div>
-        </div>
-      </div>
-
-      <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0 kpi-table">
-          <thead>
-            <tr>
-              <th>Component</th>
-              <th class="text-end">Annual Deterioration</th>
-              <th class="text-end">% of Total</th>
-              <th style="min-width:120px;">Share</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in summary.deterioration.components %}
-            <tr>
-              <td class="kpi-label">{{ row.name }}</td>
-              <td class="text-end">${{ "{:,.0f}".format(row.annual) }}</td>
-              <td class="text-end">{{ row.pct }}%</td>
-              <td>
-                <div class="progress" style="height:8px; margin-top:4px;">
-                  <div class="progress-bar" style="width:{{ row.pct }}%; background:#1a3a5c;"></div>
-                </div>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot>
-            <tr class="table-light fw-semibold">
-              <td>Total</td>
-              <td class="text-end">${{ "{:,.0f}".format(summary.deterioration.total_annual) }}</td>
-              <td class="text-end">100%</td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- 30-Year Cash Flow Projection -->
-  {% set fin_rows = [
-    ("expenditure",        "1. Expenditures"),
-    ("opening_balance",    "2. Opening Balance"),
-    ("contribution",       "3. Contributions"),
-    ("return_on_savings",  "4. Return on Savings"),
-    ("closing_balance",    "5. Closing Balance"),
-    ("monthly_per_unit",   "6. Avg Monthly Per Unit"),
-    ("special_assessment", "7. Special Assessment")
-  ] %}
-  {% set horizon = summary.config.forecast_horizon_years | int %}
-  {% set block_size = 5 %}
-  {% set n_blocks = ((horizon + block_size - 1) // block_size) | int %}
-
-  <div class="card mb-4">
-    <div class="card-header py-2 d-flex justify-content-between align-items-center">
-      <h6 class="mb-0">{{ horizon }}-Year Cash Flow Projection</h6>
-      <small class="text-white-50">
-        Inflation {{ "{:.1%}".format(summary.projection.params.inflation_rate) }} ·
-        Return {{ "{:.1%}".format(summary.projection.params.interest_rate) }} ·
-        Contribution growth {{ "{:.1%}".format(summary.projection.params.contribution_growth) }}
-      </small>
-    </div>
-
-    <ul class="nav nav-tabs px-3 pt-2" role="tablist">
-      <li class="nav-item">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#proj-unstressed" type="button">Unstressed</button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#proj-stressed" type="button">
-          Stressed (life ×{{ summary.config.life_shock_mean }}, cost ×{{ summary.config.cost_shock_mean }})
-        </button>
-      </li>
-    </ul>
-
-    <div class="tab-content">
-      {% for scenario_key, scenario_id in [("unstressed", "proj-unstressed"), ("stressed", "proj-stressed")] %}
-        {% set scenario = summary.projection[scenario_key] %}
-        <div class="tab-pane fade {{ 'show active' if scenario_key == 'unstressed' else '' }}" id="{{ scenario_id }}">
-          {% for block in range(n_blocks) %}
-            {% set start = block * block_size %}
-            {% set end = (start + block_size) if (start + block_size) <= horizon else horizon %}
-            <div class="p-3">
-              <div class="text-muted small fw-semibold mb-1">Years {{ start + 1 }}–{{ end }}</div>
-              <div class="table-responsive">
-                <table class="table table-sm table-bordered mb-0 kpi-table">
-                  <thead>
-                    <tr>
-                      <th style="min-width:200px;">Property Component</th>
-                      {% for y in range(start, end) %}
-                      <th class="text-end">Year {{ y + 1 }}</th>
-                      {% endfor %}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for name, costs in scenario.schedule.items() | sort %}
-                      {% set has_in_block = false %}
-                      {% for y in range(start, end) %}
-                        {% if costs[y] > 0 %}{% set has_in_block = true %}{% endif %}
-                      {% endfor %}
-                      {% if has_in_block %}
-                      <tr>
-                        <td class="kpi-label">{{ name }}</td>
-                        {% for y in range(start, end) %}
-                        <td class="text-end">
-                          {% if costs[y] > 0 %}${{ "{:,.0f}".format(costs[y]) }}{% else %}<span class="text-muted">—</span>{% endif %}
-                        </td>
-                        {% endfor %}
-                      </tr>
-                      {% endif %}
-                    {% endfor %}
-                  </tbody>
-                  <tfoot class="table-light">
-                    {% for fkey, flabel in fin_rows %}
-                    <tr>
-                      <td class="fw-semibold">{{ flabel }}</td>
-                      {% for y in range(start, end) %}
-                      {% set v = scenario.financials[y][fkey] %}
-                      <td class="text-end {% if fkey == 'special_assessment' and v > 0 %}text-danger fw-semibold{% elif fkey == 'closing_balance' %}fw-semibold{% endif %}">
-                        ${{ "{:,.0f}".format(v) }}
-                      </td>
-                      {% endfor %}
-                    </tr>
-                    {% endfor %}
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Reserve Balance KPI Tables -->
-  {% set bal_labels = [
-    ("min_balance_yr_1_5",  "Minimum Balance — Years 1–5"),
-    ("min_balance_yr_6_10", "Minimum Balance — Years 6–10"),
-    ("min_balance_30yr",    "Minimum Balance — 30yr"),
-    ("balance_at_yr10",     "Reserve Balance at Year 10"),
-    ("balance_at_yr30",     "Reserve Balance at Year 30")
-  ] %}
-  <div class="row g-4 mb-4">
-    <div class="col-lg-6">
-      <div class="card h-100">
-        <div class="card-header py-2"><h6 class="mb-0">Reserve Balance — Total ($)</h6></div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0 kpi-table">
-              <thead>
-                <tr>
-                  <th>KPI</th>
-                  <th class="text-end">Mean</th><th class="text-end">P25</th>
-                  <th class="text-end">P50</th><th class="text-end">P75</th>
-                  <th class="text-end">P90</th><th class="text-end">P95</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for key, label in bal_labels %}
-                  {% if key in summary.kpis_balance_total %}
-                  {% set s = summary.kpis_balance_total[key] %}
-                  <tr>
-                    <td class="kpi-label">{{ label }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.mean) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p25) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p50) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p75) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p90) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p95) }}</td>
-                  </tr>
-                  {% endif %}
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-6">
-      <div class="card h-100">
-        <div class="card-header py-2"><h6 class="mb-0">Reserve Balance — Per Unit ($)</h6></div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0 kpi-table">
-              <thead>
-                <tr>
-                  <th>KPI</th>
-                  <th class="text-end">Mean</th><th class="text-end">P25</th>
-                  <th class="text-end">P50</th><th class="text-end">P75</th>
-                  <th class="text-end">P90</th><th class="text-end">P95</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for key, label in bal_labels %}
-                  {% if key in summary.kpis_balance_per_unit %}
-                  {% set s = summary.kpis_balance_per_unit[key] %}
-                  <tr>
-                    <td class="kpi-label">{{ label }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.mean) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p25) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p50) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p75) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p90) }}</td>
-                    <td class="text-end">${{ "{:,.0f}".format(s.p95) }}</td>
-                  </tr>
-                  {% endif %}
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Risk Indicators -->
-  <div class="card">
-    <div class="card-header green py-2"><h6 class="mb-0 text-white">Risk Indicators</h6></div>
+    <div class="card-header py-2"><h6 class="mb-0">KPI Comparison</h6></div>
     <div class="card-body p-0">
-      <table class="table table-sm mb-0">
+      <table class="table table-hover kpi-table mb-0">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th class="text-end scenario-col-base">Base Case</th>
+            <th class="text-end scenario-col-full">Full Funding</th>
+          </tr>
+        </thead>
         <tbody>
           <tr>
-            <td class="text-muted ps-3">Starting reserve (total)</td>
-            <td class="fw-semibold">${{ "{:,.0f}".format(summary.config.starting_reserve_total) }}</td>
-            <td class="text-muted">Starting reserve per unit</td>
-            <td class="fw-semibold pe-3">${{ "{:,.0f}".format(summary.config.starting_reserve_per_unit) }}</td>
+            <td>P(special assessment), years 1–5</td>
+            <td class="text-end scenario-col-base">{{ "{:.1%}".format(summary.base.prob_assessment.yr_1_5) }}</td>
+            <td class="text-end scenario-col-full">{{ "{:.1%}".format(summary.full.prob_assessment.yr_1_5) }}</td>
           </tr>
           <tr>
-            <td class="text-muted ps-3">Annual contribution (total)</td>
-            <td class="fw-semibold">${{ "{:,.0f}".format(summary.config.annual_contribution_total) }}</td>
-            <td class="text-muted">Annual contribution per unit</td>
-            <td class="fw-semibold pe-3">${{ "{:,.0f}".format(summary.config.annual_contribution_per_unit) }}</td>
+            <td>P(special assessment), years 1–10</td>
+            <td class="text-end scenario-col-base">{{ "{:.1%}".format(summary.base.prob_assessment.yr_1_10) }}</td>
+            <td class="text-end scenario-col-full">{{ "{:.1%}".format(summary.full.prob_assessment.yr_1_10) }}</td>
           </tr>
           <tr>
-            <td class="text-muted ps-3">Probability of assessment — yrs 1–5</td>
-            <td class="fw-semibold">{{ "{:.1%}".format(summary.probability_of_assessment.yr_1_5) }}</td>
-            <td class="text-muted">Probability of assessment — yrs 1–10</td>
-            <td class="fw-semibold pe-3">{{ "{:.1%}".format(summary.probability_of_assessment.yr_1_10) }}</td>
+            <td>P(special assessment), 30 years</td>
+            <td class="text-end scenario-col-base">{{ "{:.1%}".format(summary.base.prob_assessment.yr_30) }}</td>
+            <td class="text-end scenario-col-full">{{ "{:.1%}".format(summary.full.prob_assessment.yr_30) }}</td>
           </tr>
           <tr>
-            <td class="text-muted ps-3">Probability of assessment — 30yr</td>
-            <td class="fw-semibold">{{ "{:.1%}".format(summary.probability_of_assessment["30yr"]) }}</td>
-            <td class="text-muted">Components in simulation</td>
-            <td class="fw-semibold pe-3">{{ summary.components_loaded }}</td>
+            <td>Median total special assessment (30 yr)</td>
+            <td class="text-end scenario-col-base">${{ "{:,.0f}".format(summary.base.median_total_assessment.total) }}</td>
+            <td class="text-end scenario-col-full">${{ "{:,.0f}".format(summary.full.median_total_assessment.total) }}</td>
           </tr>
           <tr>
-            <td class="text-muted ps-3">% of 30yr expenditure in yrs 1–5</td>
-            <td class="fw-semibold">{{ "{:.1%}".format(summary.expenditure_distribution.pct_outflow_yr_1_5) }}</td>
-            <td class="text-muted">% of 30yr expenditure in yrs 6–10</td>
-            <td class="fw-semibold pe-3">{{ "{:.1%}".format(summary.expenditure_distribution.pct_outflow_yr_6_10) }}</td>
+            <td>Median total SA per unit (30 yr)</td>
+            <td class="text-end scenario-col-base">${{ "{:,.0f}".format(summary.base.median_total_assessment.per_unit) }}</td>
+            <td class="text-end scenario-col-full">${{ "{:,.0f}".format(summary.full.median_total_assessment.per_unit) }}</td>
           </tr>
           <tr>
-            <td class="text-muted ps-3">Median assessment years (30yr)</td>
-            <td class="fw-semibold">{{ summary.assessment_frequency.n_assessment_years.p50 | round(0) | int }} yrs</td>
-            <td class="text-muted">P90 assessment years (30yr)</td>
-            <td class="fw-semibold pe-3">{{ summary.assessment_frequency.n_assessment_years.p90 | round(0) | int }} yrs</td>
+            <td>Median # of assessment years (of 30)</td>
+            <td class="text-end scenario-col-base">{{ "{:.1f}".format(summary.base.median_n_assessment_years) }}</td>
+            <td class="text-end scenario-col-full">{{ "{:.1f}".format(summary.full.median_n_assessment_years) }}</td>
           </tr>
           <tr>
-            <td class="text-muted ps-3">Largest single-year assessment P50</td>
-            <td class="fw-semibold">${{ "{:,.0f}".format(summary.assessment_frequency.max_single_assessment.p50) }}</td>
-            <td class="text-muted">Largest single-year assessment P90</td>
-            <td class="fw-semibold pe-3">${{ "{:,.0f}".format(summary.assessment_frequency.max_single_assessment.p90) }}</td>
-          </tr>
-          <tr>
-            <td class="text-muted ps-3">Contribution adequacy ratio</td>
-            <td class="fw-semibold {% if summary.contribution_adequacy_ratio < 0.8 %}text-danger{% elif summary.contribution_adequacy_ratio < 1.0 %}text-warning{% else %}text-success{% endif %}">
-              {{ "{:.2f}".format(summary.contribution_adequacy_ratio) }}
-              {% if summary.contribution_adequacy_ratio < 1.0 %}<small class="ms-1">(underfunded under stress)</small>{% endif %}
+            <td>Contribution ÷ annual deterioration</td>
+            <td class="text-end scenario-col-base">
+              {% if summary.deterioration.funding_ratio.base is not none %}
+                {{ "{:.1%}".format(summary.deterioration.funding_ratio.base) }}
+              {% else %}—{% endif %}
             </td>
-            <td class="text-muted" colspan="2"><small>Annual contribution ÷ median annual stressed outflow. &lt;1.0 = contributions trail spending under stress.</small></td>
+            <td class="text-end scenario-col-full">
+              {% if summary.deterioration.funding_ratio.full is not none %}
+                {{ "{:.1%}".format(summary.deterioration.funding_ratio.full) }}
+              {% else %}—{% endif %}
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
 
+  <!-- 4. Warranty Risk Analysis -->
+  {% if summary.warranty_analysis and (summary.warranty_analysis.base or summary.warranty_analysis.full) %}
+  <div class="card mb-4">
+    <div class="card-header gold py-2"><h6 class="mb-0 text-white">Warranty Risk Analysis</h6></div>
+    <div class="card-body">
+      <div class="row g-3">
+        {% for scenario in ['base', 'full'] %}
+          {% set wa = summary.warranty_analysis[scenario] %}
+          {% if wa %}
+          {% set verdict_color = {'highly_profitable':'success','on_target':'success','marginal':'warning','underpriced':'danger'}[wa.verdict] %}
+          <div class="col-md-6">
+            <div class="border rounded p-3 h-100 {% if scenario == 'base' %}scenario-col-base{% else %}scenario-col-full{% endif %}">
+              <div class="fw-bold mb-2">
+                {{ 'Base Case' if scenario == 'base' else 'Full Funding' }}
+                <small class="text-muted">
+                  · {{ wa.property_type_used }} · Standard ${{ "{:,.0f}".format(wa.standard_price_used) }}
+                </small>
+              </div>
+              <div class="row g-2 text-center mb-2">
+                <div class="col-6">
+                  <div class="text-muted small">Premium (one-time)</div>
+                  <div class="fw-semibold">${{ "{:,.0f}".format(wa.target_terms.warranty_premium) }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted small">Coverage / Deductible</div>
+                  <div class="fw-semibold">${{ "{:,.0f}".format(wa.target_terms.coverage_total) }} / ${{ "{:,.0f}".format(wa.target_terms.deductible) }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted small">Claim Probability (5 yr)</div>
+                  <div class="fw-semibold">{{ "{:.1%}".format(wa.stress_results.claim_probability) }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted small">Expected Payout</div>
+                  <div class="fw-semibold">${{ "{:,.0f}".format(wa.stress_results.expected_payout) }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted small">Loss Ratio</div>
+                  <div class="fw-semibold">{{ "{:.0%}".format(wa.actual_loss_ratio) }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted small">Verdict</div>
+                  <div class="fw-semibold text-{{ verdict_color }}">{{ wa.verdict.replace('_', ' ') }}</div>
+                </div>
+              </div>
+              <div class="alert alert-{{ wa.eligibility.color }} mb-0 py-2">
+                <strong>{{ wa.eligibility.label }}</strong>
+                <div class="small">{{ wa.eligibility.reason }}</div>
+                {% if wa.custom_quote %}
+                <hr class="my-2"/>
+                <div class="small">
+                  Required premium for {{ "{:.0%}".format(wa.target_terms.target_loss_ratio) }} loss ratio:
+                  <strong>${{ "{:,.0f}".format(wa.custom_quote.required_premium) }}</strong>
+                  ({{ wa.custom_quote.required_premium_tier_mult }}× Standard)
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="text-muted small mt-3">
+        {{ (summary.warranty_analysis.base or summary.warranty_analysis.full).methodology_note }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
 </div>
+
+<script>
+  const chartData = {{ summary.chart | tojson }};
+
+  new Chart(document.getElementById('forecast-chart'), {
+    type: 'bar',
+    data: {
+      labels: chartData.years.map(y => 'Yr ' + y),
+      datasets: [
+        {
+          type: 'bar',
+          label: 'P50 Expenditure',
+          data: chartData.p50_outflow,
+          backgroundColor: 'rgba(220, 53, 69, 0.7)',
+          borderColor: 'rgba(220, 53, 69, 1)',
+          borderWidth: 1,
+          order: 3
+        },
+        {
+          type: 'bar',
+          label: 'Base Contribution',
+          data: chartData.base_contribution_stream,
+          backgroundColor: 'rgba(120, 180, 220, 0.7)',
+          borderColor: 'rgba(120, 180, 220, 1)',
+          borderWidth: 1,
+          order: 4
+        },
+        {
+          type: 'bar',
+          label: 'Full Funding Contribution',
+          data: chartData.full_contribution_stream,
+          backgroundColor: 'rgba(30, 80, 140, 0.7)',
+          borderColor: 'rgba(30, 80, 140, 1)',
+          borderWidth: 1,
+          order: 5
+        },
+        {
+          type: 'line',
+          label: 'P50 Closing Balance (Base)',
+          data: chartData.p50_balance_base,
+          borderColor: 'rgba(120, 180, 220, 1)',
+          backgroundColor: 'rgba(120, 180, 220, 0.1)',
+          borderWidth: 2,
+          tension: 0.2,
+          fill: false,
+          order: 1
+        },
+        {
+          type: 'line',
+          label: 'P50 Closing Balance (Full Funding)',
+          data: chartData.p50_balance_full,
+          borderColor: 'rgba(30, 80, 140, 1)',
+          backgroundColor: 'rgba(30, 80, 140, 0.1)',
+          borderWidth: 2,
+          tension: 0.2,
+          fill: false,
+          order: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': $' +
+              Number(ctx.parsed.y).toLocaleString(undefined, { maximumFractionDigits: 0 })
+          }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Year' } },
+        y: {
+          title: { display: true, text: 'Dollars' },
+          ticks: { callback: v => '$' + Number(v).toLocaleString() }
+        }
+      }
+    }
+  });
+</script>
+
 </body>
 </html>

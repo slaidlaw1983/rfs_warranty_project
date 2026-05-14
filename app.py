@@ -18,10 +18,16 @@ from csv_parser import parse_reserve_csv
 from pricing import (PROPERTY_TYPES, UNIT_BRACKETS, get_pricing,
                      get_full_pricing_table)
 from warranty import calculate_warranty_risk_analysis
+import policies
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "change-this-in-production")
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB
+
+
+def _sheet_configured() -> bool:
+    return bool(os.environ.get("GSHEETS_SHEET_ID")
+                and os.environ.get("GSHEETS_SERVICE_ACCOUNT_JSON"))
 
 
 # ── Password gate ────────────────────────────────────────────────────────────
@@ -398,6 +404,11 @@ def run():
         attachments=attachments,
     )
 
+    summary["sheet_configured"] = _sheet_configured()
+    summary["property_name"]    = property_name
+    summary["contact_name"]     = contact_name
+    summary["contact_email"]    = contact_email
+
     return render_template("results.html", summary=summary)
 
 
@@ -447,6 +458,41 @@ def download_csv():
         as_attachment=True,
         download_name="stress_test_kpis.csv",
     )
+
+
+@app.route("/save-policy", methods=["POST"])
+def save_policy_route():
+    funding_model = request.form.get("funding_model", "").strip()
+    if funding_model not in ("base", "full"):
+        flash("Please select a funding model (Base Case or Full Funding).")
+        return redirect(url_for("index"))
+
+    status = request.form.get("status", "pending_quote").strip()
+    if status not in ("pending_quote", "approved", "rejected"):
+        status = "pending_quote"
+
+    payload = {
+        "status":                    status,
+        "funding_model":             funding_model,
+        "property_name":             request.form.get("property_name", "").strip(),
+        "contact_name":              request.form.get("contact_name", "").strip(),
+        "contact_email":             request.form.get("contact_email", "").strip(),
+        "property_type":             request.form.get("property_type", "").strip(),
+        "num_units":                 request.form.get("num_units", ""),
+        "standard_price":            request.form.get("standard_price", ""),
+        "coverage_per_unit":         request.form.get("coverage_per_unit", ""),
+        "coverage_total":            request.form.get("coverage_total", ""),
+        "claim_probability":         request.form.get(f"claim_probability_{funding_model}", ""),
+        "warranty_premium_default":  request.form.get("warranty_premium_default", ""),
+        "warranty_premium_charged":  request.form.get(f"warranty_premium_charged_{funding_model}", ""),
+        "verdict":                   request.form.get(f"verdict_{funding_model}", ""),
+    }
+    policy_id = policies.save_policy(payload)
+    if policy_id is None:
+        flash("Could not save policy — check that GSHEETS_* env vars are set.")
+        return redirect(url_for("index"))
+
+    return redirect(url_for("portfolio_route", just_saved=policy_id))
 
 
 if __name__ == "__main__":

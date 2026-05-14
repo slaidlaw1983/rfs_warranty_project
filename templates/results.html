@@ -283,6 +283,62 @@
   </div>
   {% endif %}
 
+  <!-- 7. Save This Quote -->
+  {% if summary.sheet_configured and summary.warranty_analysis
+        and (summary.warranty_analysis.base or summary.warranty_analysis.full) %}
+  {% set wa_base = summary.warranty_analysis.base %}
+  {% set wa_full = summary.warranty_analysis.full %}
+  <div class="card mb-4">
+    <div class="card-header py-2"><h6 class="mb-0">Save This Quote</h6></div>
+    <div class="card-body">
+      <form action="/save-policy" method="POST" class="row g-3 align-items-end">
+        <div class="col-md-5">
+          <label class="form-label fw-semibold mb-1">Funding model (required)</label>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="fm_base" name="funding_model" value="base" required />
+            <label class="form-check-label" for="fm_base">Base Case</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="fm_full" name="funding_model" value="full" required />
+            <label class="form-check-label" for="fm_full">Full Funding</label>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold mb-1">Initial status</label>
+          <select name="status" class="form-select">
+            <option value="pending_quote" selected>Pending quote</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-primary w-100">Save policy</button>
+        </div>
+
+        <!-- Hidden payload carriers -->
+        <input type="hidden" name="property_name"  value="{{ summary.property_name | default('') }}" />
+        <input type="hidden" name="contact_name"   value="{{ summary.contact_name  | default('') }}" />
+        <input type="hidden" name="contact_email"  value="{{ summary.contact_email | default('') }}" />
+        <input type="hidden" name="property_type"  value="{{ (wa_base or wa_full).property_type_used | default('') }}" />
+        <input type="hidden" name="num_units"      value="{{ summary.config.num_units }}" />
+        <input type="hidden" name="standard_price" value="{{ (wa_base or wa_full).standard_price_used | default('') }}" />
+        <input type="hidden" name="coverage_per_unit" value="{{ (wa_base or wa_full).target_terms.coverage_per_unit }}" />
+        <input type="hidden" name="coverage_total" value="{{ (wa_base or wa_full).target_terms.coverage_total }}" />
+
+        <input type="hidden" name="claim_probability_base" value="{{ summary.base.prob_assessment.yr_1_5 if summary.base else '' }}" />
+        <input type="hidden" name="claim_probability_full" value="{{ summary.full.prob_assessment.yr_1_5 if summary.full else '' }}" />
+
+        <input type="hidden" name="warranty_premium_default" value="{{ (wa_base or wa_full).target_terms.warranty_premium_default }}" />
+        <input type="hidden" name="warranty_premium_charged_base" value="{{ wa_base.target_terms.warranty_premium_displayed if wa_base else '' }}" />
+        <input type="hidden" name="warranty_premium_charged_full" value="{{ wa_full.target_terms.warranty_premium_displayed if wa_full else '' }}" />
+
+        <input type="hidden" name="verdict_base" value="{{ wa_base.verdict if wa_base else '' }}" />
+        <input type="hidden" name="verdict_full" value="{{ wa_full.verdict if wa_full else '' }}" />
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
 </div>
 
 <script>

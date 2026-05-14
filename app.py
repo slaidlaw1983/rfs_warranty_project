@@ -495,5 +495,38 @@ def save_policy_route():
     return redirect(url_for("portfolio_route", just_saved=policy_id))
 
 
+@app.route("/portfolio")
+def portfolio_route():
+    if not _sheet_configured():
+        return render_template("portfolio.html",
+                               configured=False,
+                               policies=[],
+                               stats=policies.compute_program_stats([]),
+                               status_filter=["approved"],
+                               search="",
+                               just_saved=None)
+
+    # Approved-only for the rollup (always)
+    approved_rows = policies.list_policies(status_filter=["approved"])
+    stats = policies.compute_program_stats(approved_rows)
+
+    # Filterable table (default to approved if no filter supplied)
+    sel = request.args.getlist("status") or ["approved"]
+    search = (request.args.get("search") or "").strip()
+    rows = policies.list_policies(
+        status_filter=sel if sel != ["all"] else None,
+        search=search or None,
+    )
+    rows.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+
+    return render_template("portfolio.html",
+                           configured=True,
+                           policies=rows,
+                           stats=stats,
+                           status_filter=sel,
+                           search=search,
+                           just_saved=request.args.get("just_saved"))
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=8081)

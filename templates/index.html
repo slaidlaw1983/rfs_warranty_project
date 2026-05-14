@@ -27,15 +27,15 @@
 
 <div id="loading-overlay">
   <div class="spinner-border" role="status"></div>
-  <p>Running stress test…</p>
-  <small>2,000 trials × 30 years — usually 5–15 seconds.</small>
+  <p>Running Monte Carlo…</p>
+  <small>1,000 trials × 30 years — usually 3–8 seconds.</small>
 </div>
 
 <div class="container py-5" style="max-width: 760px;">
 
   <div class="text-center mb-4">
     <h2 class="fw-bold" style="color:#1a3a5c;">Reserve Fund Study — Stress Test</h2>
-    <p class="text-muted">Upload a reserve study CSV and configure shock parameters to model special assessment risk.</p>
+    <p class="text-muted">Upload a reserve study CSV and compare Base Case vs. Full Funding contributions.</p>
     <a href="/pricing" class="btn btn-outline-primary btn-sm">View RFS Pricing Calculator →</a>
   </div>
 
@@ -84,8 +84,8 @@
 
         <!-- Property Parameters -->
         <p class="section-label">Property Parameters</p>
-        <div class="row g-3 mb-3">
-          <div class="col-md-3">
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
             <label class="form-label">Property Type</label>
             <select class="form-select" name="property_type">
               <option value="Apartment">Apartment</option>
@@ -95,87 +95,51 @@
             </select>
             <div class="form-text">Used for warranty risk analysis</div>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             <label class="form-label">Number of Units <span class="text-danger">*</span></label>
             <input type="number" class="form-control" name="num_units" placeholder="e.g. 24" min="1" step="1" required />
           </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             <label class="form-label">Opening Reserve Balance ($) <span class="text-danger">*</span></label>
             <input type="number" class="form-control" name="starting_reserve" placeholder="e.g. 125000" min="0" step="1" required />
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Annual Contribution ($) <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" name="annual_contribution" placeholder="e.g. 48000" min="0" step="1" required />
-          </div>
         </div>
 
-        <!-- Variability Parameters -->
-        <p class="section-label">Variability Parameters</p>
+        <!-- Contributions -->
+        <p class="section-label">Annual Contributions</p>
         <p class="text-muted small mb-3">
-          The engineer's current cost and design life are treated as the P50 (median) for each component.
-          Each Monte Carlo trial draws a random cost (lognormal, mean=1.0) and design life (normal, mean=1.0)
-          per component. Standard deviation defaults to 0.30 (≈30% variability — captures realistic cost overruns
-          and component-life uncertainty).
+          Enter the two annual contribution levels to compare. Both grow each year by the
+          inflation rate. The Monte Carlo runs once and walks the reserve balance forward
+          under each contribution stream, so the comparison is apples-to-apples.
         </p>
-
-        <div class="row g-3 mb-3">
-          <div class="col-md-3">
-            <label class="form-label">Cost Mean</label>
-            <input type="number" class="form-control" name="cost_shock_mean" value="1.00" min="0.5" max="5.0" step="0.01" />
-            <div class="form-text">1.00 = current cost is P50. Raise &gt; 1 to bias upward.</div>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Cost Std Dev</label>
-            <input type="number" class="form-control" name="cost_shock_sigma" value="0.30" min="0.01" max="1.0" step="0.01" />
-            <div class="form-text">Arithmetic σ on the cost multiplier (lognormal).</div>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Life Mean</label>
-            <input type="number" class="form-control" name="life_shock_mean" value="1.00" min="0.1" max="2.0" step="0.01" />
-            <div class="form-text">1.00 = engineer's design life is P50.</div>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Life Std Dev</label>
-            <input type="number" class="form-control" name="life_shock_sigma" value="0.30" min="0.01" max="1.0" step="0.01" />
-            <div class="form-text">σ on the life multiplier (normal).</div>
-          </div>
-        </div>
-
         <div class="row g-3 mb-4">
-          <div class="col-md-4">
-            <label class="form-label">Number of Trials</label>
-            <input type="number" class="form-control" name="num_trials" value="1000" min="100" max="10000" step="100" />
+          <div class="col-md-6">
+            <label class="form-label">Base Case Contribution ($/yr) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="base_contribution" placeholder="e.g. 48000" min="0" step="1" required />
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Forecast Horizon (years)</label>
-            <input type="number" class="form-control" name="horizon" value="30" min="10" max="50" step="1" />
+          <div class="col-md-6">
+            <label class="form-label">Full Funding Contribution ($/yr) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="full_funding_contribution" placeholder="e.g. 120000" min="0" step="1" required />
           </div>
         </div>
 
         <!-- Financial Parameters -->
         <p class="section-label">Financial Parameters</p>
-        <p class="text-muted small mb-3">Used for the year-by-year cash flow projection (separate from the Monte Carlo stress test).</p>
-
         <div class="row g-3 mb-4">
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Inflation Rate</label>
             <input type="number" class="form-control" name="inflation_rate" value="0.03" min="0" max="0.20" step="0.005" />
-            <div class="form-text">e.g. 0.03 = 3% annual cost inflation</div>
+            <div class="form-text">Applies to both component costs and contribution amounts (e.g. 0.03 = 3%).</div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label">Return on Savings</label>
             <input type="number" class="form-control" name="interest_rate" value="0.025" min="0" max="0.20" step="0.005" />
-            <div class="form-text">e.g. 0.025 = 2.5% on reserve balance</div>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Contribution Growth</label>
-            <input type="number" class="form-control" name="contribution_growth" value="0.04" min="0" max="0.20" step="0.005" />
-            <div class="form-text">e.g. 0.04 = 4% annual increase</div>
+            <div class="form-text">Interest earned on the reserve balance (e.g. 0.025 = 2.5%).</div>
           </div>
         </div>
 
         <div class="d-grid">
-          <button type="submit" class="btn btn-primary btn-lg">Run Stress Test</button>
+          <button type="submit" class="btn btn-primary btn-lg">Run Monte Carlo</button>
         </div>
 
       </form>

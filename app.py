@@ -18,10 +18,16 @@ from csv_parser import parse_reserve_csv
 from pricing import (PROPERTY_TYPES, UNIT_BRACKETS, get_pricing,
                      get_full_pricing_table)
 from warranty import calculate_warranty_risk_analysis
+import policies
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "change-this-in-production")
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB
+
+
+def _sheet_configured() -> bool:
+    return bool(os.environ.get("GSHEETS_SHEET_ID")
+                and os.environ.get("GSHEETS_SERVICE_ACCOUNT_JSON"))
 
 
 # ── Password gate ────────────────────────────────────────────────────────────
@@ -398,6 +404,11 @@ def run():
         attachments=attachments,
     )
 
+    summary["sheet_configured"] = _sheet_configured()
+    summary["property_name"]    = property_name
+    summary["contact_name"]     = contact_name
+    summary["contact_email"]    = contact_email
+
     return render_template("results.html", summary=summary)
 
 
@@ -447,6 +458,98 @@ def download_csv():
         as_attachment=True,
         download_name="stress_test_kpis.csv",
     )
+
+
+@app.route("/save-policy", methods=["POST"])
+def save_policy_route():
+    funding_model = request.form.get("funding_model", "").strip()
+    if funding_model not in ("base", "full"):
+        flash("Please select a funding model (Base Case or Full Funding).")
+        return redirect(url_for("index"))
+
+    status = request.form.get("status", "pending_quote").strip()
+    if status not in ("pending_quote", "approved", "rejected"):
+        status = "pending_quote"
+
+    payload = {
+        "status":                    status,
+        "funding_model":             funding_model,
+        "property_name":             request.form.get("property_name", "").strip(),
+        "contact_name":              request.form.get("contact_name", "").strip(),
+        "contact_email":             request.form.get("contact_email", "").strip(),
+        "property_type":             request.form.get("property_type", "").strip(),
+        "num_units":                 request.form.get("num_units", ""),
+        "standard_price":            request.form.get("standard_price", ""),
+        "coverage_per_unit":         request.form.get("coverage_per_unit", ""),
+        "coverage_total":            request.form.get("coverage_total", ""),
+        "claim_probability":         request.form.get(f"claim_probability_{funding_model}", ""),
+        "warranty_premium_default":  request.form.get("warranty_premium_default", ""),
+        "warranty_premium_charged":  request.form.get(f"warranty_premium_charged_{funding_model}", ""),
+        "verdict":                   request.form.get(f"verdict_{funding_model}", ""),
+    }
+    policy_id = policies.save_policy(payload)
+    if policy_id is None:
+        flash("Could not save policy — check that GSHEETS_* env vars are set.")
+        return redirect(url_for("index"))
+
+    return redirect(url_for("portfolio_route", just_saved=policy_id))
+
+
+@app.route("/portfolio")
+def portfolio_route():
+    if not _sheet_configured():
+        return render_template("portfolio.html",
+                               configured=False,
+                               policies=[],
+                               stats=policies.compute_program_stats([]),
+                               status_filter=["approved"],
+                               search="",
+                               just_saved=None)
+
+    # Approved-only for the rollup (always)
+    approved_rows = policies.list_policies(status_filter=["approved"])
+    stats = policies.compute_program_stats(approved_rows)
+
+    # Filterable table (default to approved if no filter supplied)
+    sel = request.args.getlist("status") or ["approved"]
+    search = (request.args.get("search") or "").strip()
+    rows = policies.list_policies(
+        status_filter=sel if sel != ["all"] else None,
+        search=search or None,
+    )
+    rows.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+
+    return render_template("portfolio.html",
+                           configured=True,
+                           policies=rows,
+                           stats=stats,
+                           status_filter=sel,
+                           search=search,
+                           just_saved=request.args.get("just_saved"))
+
+
+@app.route("/portfolio/<policy_id>/approve", methods=["POST"])
+def portfolio_approve(policy_id):
+    ok = policies.update_policy_status(policy_id, "approved")
+    if not ok:
+        flash(f"Could not approve policy {policy_id} — not found or Sheet not configured.")
+    return redirect(url_for("portfolio_route"))
+
+
+@app.route("/portfolio/<policy_id>/reject", methods=["POST"])
+def portfolio_reject(policy_id):
+    ok = policies.update_policy_status(policy_id, "rejected")
+    if not ok:
+        flash(f"Could not reject policy {policy_id} — not found or Sheet not configured.")
+    return redirect(url_for("portfolio_route"))
+
+
+@app.route("/portfolio/<policy_id>/delete", methods=["POST"])
+def portfolio_delete(policy_id):
+    ok = policies.delete_policy(policy_id)
+    if not ok:
+        flash(f"Could not delete policy {policy_id} — not found or Sheet not configured.")
+    return redirect(url_for("portfolio_route"))
 
 
 if __name__ == "__main__":

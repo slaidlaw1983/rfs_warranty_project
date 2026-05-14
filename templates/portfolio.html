@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Policy Portfolio</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background: #f4f6f9; }
+    .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .card-header { background: #1a3a5c; color: #fff; border-radius: 12px 12px 0 0 !important; }
+    .stat { text-align: center; padding: 0.5rem; }
+    .stat .label { color: #6c757d; font-size: 0.78rem; }
+    .stat .value { font-weight: 600; font-size: 1.15rem; }
+    .badge-pending { background: #6c757d; }
+    .badge-approved { background: #1e6b3c; }
+    .badge-rejected { background: #b71c1c; }
+    .badge-funding { background: #1a3a5c; }
+    table { font-size: 0.88rem; }
+  </style>
+</head>
+<body>
+<div class="container py-5" style="max-width: 1300px;">
+
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-0" style="color:#1a3a5c;">Policy Portfolio</h2>
+      <p class="text-muted mb-0">Captured quotes + lifecycle + program-level rollup.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/" class="btn btn-outline-secondary">← Back to Stress Test</a>
+      <a href="/pricing" class="btn btn-outline-primary">Pricing Calculator</a>
+    </div>
+  </div>
+
+  {% if not configured %}
+    <div class="alert alert-warning">
+      Policy tracker is not configured. Set <code>GSHEETS_SHEET_ID</code> and
+      <code>GSHEETS_SERVICE_ACCOUNT_JSON</code> env vars to enable saving and
+      reading policies.
+    </div>
+  {% endif %}
+
+  {% if just_saved %}
+    <div class="alert alert-success">
+      Policy <strong>{{ just_saved }}</strong> saved.
+    </div>
+  {% endif %}
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="alert alert-danger">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- Program Summary -->
+  <div class="card mb-4">
+    <div class="card-header py-2"><h6 class="mb-0">Program Summary (approved only)</h6></div>
+    <div class="card-body">
+      <div class="row g-2">
+        <div class="col-md-2 col-6 stat">
+          <div class="label">Active policies</div>
+          <div class="value">{{ stats.n_policies }}</div>
+        </div>
+        <div class="col-md-2 col-6 stat">
+          <div class="label">Total premium</div>
+          <div class="value">${{ "{:,.0f}".format(stats.total_premium) }}</div>
+        </div>
+        <div class="col-md-2 col-6 stat">
+          <div class="label">Total coverage</div>
+          <div class="value">${{ "{:,.0f}".format(stats.total_coverage) }}</div>
+        </div>
+        <div class="col-md-2 col-6 stat">
+          <div class="label">Σ expected claims</div>
+          <div class="value">${{ "{:,.0f}".format(stats.expected_claims) }}</div>
+        </div>
+        <div class="col-md-2 col-6 stat">
+          <div class="label">Loss ratio</div>
+          <div class="value">{{ "{:.1%}".format(stats.program_loss_ratio) }}</div>
+        </div>
+        <div class="col-md-2 col-6 stat">
+          <div class="label">Modeled profit</div>
+          <div class="value">${{ "{:,.0f}".format(stats.modeled_profit) }}</div>
+        </div>
+      </div>
+      <div class="text-muted mt-2" style="font-size:0.72rem;">
+        Modeled — based on claim probabilities at quote time, not realized claims.
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-header py-2"><h6 class="mb-0">Filters</h6></div>
+    <div class="card-body">
+      <form method="GET" class="row g-3 align-items-end">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Status</label>
+          <div>
+            {% for s, label in [('pending_quote','Pending quote'),
+                                ('approved','Approved'),
+                                ('rejected','Rejected')] %}
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox"
+                       name="status" value="{{ s }}"
+                       id="st_{{ s }}"
+                       {% if s in status_filter %}checked{% endif %} />
+                <label class="form-check-label" for="st_{{ s }}">{{ label }}</label>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Search</label>
+          <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="Property name or email" />
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100">Apply</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Policies Table -->
+  <div class="card mb-4">
+    <div class="card-header py-2"><h6 class="mb-0">Policies ({{ policies|length }})</h6></div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>ID</th><th>Created</th><th>Property</th><th>Model</th>
+              <th>Status</th><th class="text-end">Premium</th>
+              <th class="text-end">Coverage</th><th class="text-end">P(claim)</th>
+              <th>Verdict</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in policies %}
+            <tr>
+              <td><code>{{ p.policy_id }}</code></td>
+              <td>{{ p.created_at[:10] if p.created_at else '' }}</td>
+              <td>{{ p.property_name }}<br/><small class="text-muted">{{ p.contact_email }}</small></td>
+              <td><span class="badge badge-funding">{{ p.funding_model }}</span></td>
+              <td>
+                {% if p.status == 'approved' %}
+                  <span class="badge badge-approved">approved</span>
+                {% elif p.status == 'rejected' %}
+                  <span class="badge badge-rejected">rejected</span>
+                {% else %}
+                  <span class="badge badge-pending">pending</span>
+                {% endif %}
+              </td>
+              <td class="text-end">${{ "{:,.0f}".format(p.warranty_premium_charged|float) }}</td>
+              <td class="text-end">${{ "{:,.0f}".format(p.coverage_total|float) }}</td>
+              <td class="text-end">{{ "{:.1%}".format(p.claim_probability|float) }}</td>
+              <td><small>{{ p.verdict }}</small></td>
+              <td>
+                <div class="d-flex gap-1">
+                  {% if p.status != 'approved' %}
+                    <form action="/portfolio/{{ p.policy_id }}/approve" method="POST" class="d-inline">
+                      <button class="btn btn-sm btn-success">Approve</button>
+                    </form>
+                  {% endif %}
+                  {% if p.status != 'rejected' %}
+                    <form action="/portfolio/{{ p.policy_id }}/reject" method="POST" class="d-inline">
+                      <button class="btn btn-sm btn-warning">Reject</button>
+                    </form>
+                  {% endif %}
+                  <form action="/portfolio/{{ p.policy_id }}/delete" method="POST" class="d-inline"
+                        onsubmit="return confirm('Delete policy {{ p.policy_id }}?');">
+                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="10" class="text-center text-muted py-3">No policies match the current filter.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -277,8 +277,21 @@ def run_stress_test(components: List[Dict[str, Any]],
         a_1_5  = assess_mat[:, 0:min(5, horizon)].sum(axis=1)
         a_1_10 = assess_mat[:, 0:min(10, horizon)].sum(axis=1)
         a_total = assess_mat.sum(axis=1)
-        n_yrs = (assess_mat > 0).sum(axis=1)
-        med_total = float(np.median(a_total))
+        n_yrs   = (assess_mat > 0).sum(axis=1).astype(float)
+
+        def _pcts(arr: np.ndarray) -> Dict[str, float]:
+            # P5  = worst 5%   → 95th percentile of the metric
+            # P25 = worst 25%  → 75th percentile
+            # P50 = typical    → 50th percentile (median)
+            return {
+                "p5":  float(np.percentile(arr, 95)),
+                "p25": float(np.percentile(arr, 75)),
+                "p50": float(np.percentile(arr, 50)),
+            }
+
+        sa_total = _pcts(a_total)
+        sa_per_unit = {k: v / max(1, num_units) for k, v in sa_total.items()}
+
         return {
             "raw_trials": {
                 "assessment_yr_1_5":   a_1_5.tolist(),
@@ -290,11 +303,9 @@ def run_stress_test(components: List[Dict[str, Any]],
                 "yr_1_10": float(np.mean(a_1_10 > 0)),
                 "yr_30":   float(np.mean(a_total > 0)),
             },
-            "median_total_assessment": {
-                "total":    med_total,
-                "per_unit": med_total / max(1, num_units),
-            },
-            "median_n_assessment_years": float(np.median(n_yrs)),
+            "sa_total":           sa_total,
+            "sa_per_unit":        sa_per_unit,
+            "n_assessment_years": _pcts(n_yrs),
         }
 
     base_block = _model_block(assess_base_mat)

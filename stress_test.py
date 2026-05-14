@@ -2,27 +2,25 @@
 RFS Reserve Study Stress Test
 ==============================
 
-Runs a Monte Carlo stress test on a property reserve study. Each trial:
+Monte Carlo comparison of two funding models (Base vs Full Funding) over a
+30-year horizon. Each trial:
 
-  1. Samples a shocked design life multiplier per component (Normal, mean<1
-     => life decreases under stress) for both replacement and maintenance.
-  2. Samples a shocked cost multiplier per component (Lognormal, mean>1
-     => costs increase under stress) for both tracks.
-  3. Builds a year-by-year cash-flow forecast over the horizon, holding the
-     annual contribution STATIC (per project brief). Cost-only rows
-     (e.g. "Interior Doors" — cost set, no schedule) are treated as a
-     year-1 deferred-maintenance lump.
-  4. Runs the reserve balance forward; whenever it would go negative, the
-     deficit is captured as a "special assessment" that year.
-  5. Sums special assessments across the year 1-5 and year 6-10 windows
-     and reports per-unit values.
+  1. Samples a design-life multiplier per component (Normal, mean=1.0) — the
+     engineer's number is treated as the P50.
+  2. Samples a cost multiplier per component (Lognormal, mean=1.0).
+  3. Builds the yearly outflow array (with cost inflation applied at each
+     scheduled event).
+  4. Walks the reserve balance forward TWICE — once under the Base contribution
+     stream, once under the Full Funding stream (common random numbers). Each
+     stream grows by (1 + inflation_rate) per year; interest accrues on
+     (opening + contribution). Negative balance → special assessment for that
+     year; balance resets to 0.
 
-Aggregating across trials produces P25/P50/P75/P90/P95 distributions for
-each KPI, plus a few static reference numbers (starting reserve total /
-per-unit, contribution total / per-unit).
-
-Usage:
-    python3 stress_test.py
+Aggregating across trials produces, per funding model: P(special assessment)
+in years 1-5, 1-10, and 30; median total assessment ($ total + per-unit);
+median number of assessment years. The summary also returns per-year P50
+arrays for outflow + balance under each model, used to drive the results-page
+chart.
 """
 
 from typing import Any, Dict, List

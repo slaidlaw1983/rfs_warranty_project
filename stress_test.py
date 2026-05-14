@@ -17,10 +17,10 @@ Monte Carlo comparison of two funding models (Base vs Full Funding) over a
      year; balance resets to 0.
 
 Aggregating across trials produces, per funding model: P(special assessment)
-in years 1-5, 1-10, and 30; median total assessment ($ total + per-unit);
-median number of assessment years. The summary also returns per-year P50
-arrays for outflow + balance under each model, used to drive the results-page
-chart.
+in years 1-5, 1-10, and 30; P5/P25/P50 percentile distributions for total
+special assessment ($ total + per-unit) and number of assessment years. The
+summary also returns per-year P50 arrays for outflow + balance under each
+model, used to drive the results-page chart.
 """
 
 from typing import Any, Dict, List

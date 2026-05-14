@@ -25,9 +25,6 @@ Usage:
     python3 stress_test.py
 """
 
-import csv
-import json
-import os
 from typing import Any, Dict, List
 
 import numpy as np
@@ -35,12 +32,9 @@ import numpy as np
 import rfs_calculator as calc
 
 # ---------------------------------------------------------------------------
-# Property-level parameters (placeholders — swap for real values when known)
+# Property-level parameters
 # ---------------------------------------------------------------------------
 
-NUM_UNITS = 100
-STARTING_RESERVE = 500_000
-ANNUAL_CONTRIBUTION = 300_000      # held STATIC across all trials/years
 FORECAST_HORIZON_YEARS = 30
 
 # Monte Carlo trial count for the stress test. Each trial is one full
@@ -64,15 +58,6 @@ COST_SHOCK_SIGMA = 0.15     # arithmetic std-dev of the multiplier
 # Floors to keep samples physically reasonable.
 MIN_LIFE_MULTIPLIER = 0.20  # cap life decrease at 80% reduction
 MIN_COST_MULTIPLIER = 0.50  # cap cost decrease at 50% reduction
-
-# ---------------------------------------------------------------------------
-# Outputs
-# ---------------------------------------------------------------------------
-
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_JSON = os.path.join(PROJECT_DIR, "stress_test_results.json")
-OUTPUT_CSV = os.path.join(PROJECT_DIR, "stress_test_kpi_summary.csv")
-
 
 # ---------------------------------------------------------------------------
 # Shock sampling
@@ -234,51 +219,43 @@ def run_trial(components: List[Dict[str, Any]],
 # ---------------------------------------------------------------------------
 
 
-def percentile_summary(values: np.ndarray) -> Dict[str, float]:
-    return {
-        "mean": float(np.mean(values)),
-        "p25": float(np.percentile(values, 25)),
-        "p50": float(np.percentile(values, 50)),
-        "p75": float(np.percentile(values, 75)),
-        "p90": float(np.percentile(values, 90)),
-        "p95": float(np.percentile(values, 95)),
-    }
-
-
 def run_stress_test(components: List[Dict[str, Any]],
-                    num_trials: int = NUM_TRIALS,
-                    starting_reserve: float = STARTING_RESERVE,
-                    annual_contribution: float = ANNUAL_CONTRIBUTION,
-                    num_units: int = NUM_UNITS,
-                    horizon: int = FORECAST_HORIZON_YEARS,
+                    num_trials: int = 1000,
+                    starting_reserve: float = 0.0,
+                    base_contribution: float = 0.0,
+                    full_funding_contribution: float = 0.0,
+                    inflation_rate: float = 0.03,
+                    interest_rate: float = 0.025,
+                    num_units: int = 1,
+                    horizon: int = 30,
                     seed: int = 42,
                     life_shock_mean: float = LIFE_SHOCK_MEAN,
                     life_shock_sigma: float = LIFE_SHOCK_SIGMA,
                     cost_shock_mean: float = COST_SHOCK_MEAN,
                     cost_shock_sigma: float = COST_SHOCK_SIGMA) -> Dict[str, Any]:
+    """Run num_trials Monte Carlo trials of the 30-year forecast.
+
+    Each trial: sample cost (lognormal mean=1.0) and life (normal mean=1.0)
+    multipliers, build the yearly outflow (with cost inflation), then walk
+    the balance forward under BOTH the base and full-funding contribution
+    streams (common random numbers).
+
+    Returns a summary dict — see the design spec for the full shape.
+    """
     rng = np.random.default_rng(seed)
     n = len(components)
 
-    # Two tracks per component → 2n columns of multipliers
     life_mults_all = sample_life_multipliers(num_trials, 2 * n, rng,
                                              life_shock_mean, life_shock_sigma)
     cost_mults_all = sample_cost_multipliers(num_trials, 2 * n, rng,
                                              cost_shock_mean, cost_shock_sigma)
 
-    a_1_5 = np.zeros(num_trials)
-    a_6_10 = np.zeros(num_trials)
-    a_1_10 = np.zeros(num_trials)
-    a_total = np.zeros(num_trials)
-    total_outflow = np.zeros(num_trials)
-    min_bal_1_5  = np.zeros(num_trials)
-    min_bal_6_10 = np.zeros(num_trials)
-    min_bal_30yr = np.zeros(num_trials)
-    bal_at_yr10  = np.zeros(num_trials)
-    bal_at_yr30  = np.zeros(num_trials)
-    pct_outflow_1_5  = np.zeros(num_trials)
-    pct_outflow_6_10 = np.zeros(num_trials)
-    n_assessment_yrs  = np.zeros(num_trials)
-    max_single_assessment = np.zeros(num_trials)
+    # Per-trial × per-year matrices
+    outflow_mat       = np.zeros((num_trials, horizon))
+    balance_base_mat  = np.zeros((num_trials, horizon))
+    balance_full_mat  = np.zeros((num_trials, horizon))
+    assess_base_mat   = np.zeros((num_trials, horizon))
+    assess_full_mat   = np.zeros((num_trials, horizon))
 
     for t in range(num_trials):
         result = run_trial(
@@ -286,178 +263,69 @@ def run_stress_test(components: List[Dict[str, Any]],
             life_mults=life_mults_all[t],
             cost_mults=cost_mults_all[t],
             starting_reserve=starting_reserve,
-            annual_contribution=annual_contribution,
+            base_contribution=base_contribution,
+            full_funding_contribution=full_funding_contribution,
+            inflation_rate=inflation_rate,
+            interest_rate=interest_rate,
             horizon=horizon,
         )
-        bp = result["balance_path"]
-        of = result["yearly_outflow"]
-        assessments = result["yearly_assessment"]
-        total_of = float(of.sum())
+        outflow_mat[t]      = result["yearly_outflow"]
+        balance_base_mat[t] = result["balance_base"]
+        balance_full_mat[t] = result["balance_full"]
+        assess_base_mat[t]  = result["assess_base"]
+        assess_full_mat[t]  = result["assess_full"]
 
-        a_1_5[t] = result["assessment_yr_1_5"]
-        a_6_10[t] = result["assessment_yr_6_10"]
-        a_1_10[t] = result["assessment_yr_1_10"]
-        a_total[t] = result["assessment_total"]
-        total_outflow[t] = total_of
+    def _model_block(assess_mat: np.ndarray) -> Dict[str, Any]:
+        a_1_5  = assess_mat[:, 0:min(5, horizon)].sum(axis=1)
+        a_1_10 = assess_mat[:, 0:min(10, horizon)].sum(axis=1)
+        a_total = assess_mat.sum(axis=1)
+        n_yrs = (assess_mat > 0).sum(axis=1)
+        med_total = float(np.median(a_total))
+        return {
+            "raw_trials": {
+                "assessment_yr_1_5":   a_1_5.tolist(),
+                "assessment_yr_1_10":  a_1_10.tolist(),
+                "assessment_yr_total_30": a_total.tolist(),
+            },
+            "prob_assessment": {
+                "yr_1_5":  float(np.mean(a_1_5 > 0)),
+                "yr_1_10": float(np.mean(a_1_10 > 0)),
+                "yr_30":   float(np.mean(a_total > 0)),
+            },
+            "median_total_assessment": {
+                "total":    med_total,
+                "per_unit": med_total / max(1, num_units),
+            },
+            "median_n_assessment_years": float(np.median(n_yrs)),
+        }
 
-        min_bal_1_5[t]  = float(bp[0:5].min())
-        min_bal_6_10[t] = float(bp[5:min(10, horizon)].min()) if horizon > 5 else float(bp.min())
-        min_bal_30yr[t] = float(bp.min())
-        bal_at_yr10[t]  = float(bp[min(9, horizon - 1)])
-        bal_at_yr30[t]  = float(bp[-1])
-        pct_outflow_1_5[t]  = float(of[0:5].sum() / total_of) if total_of > 0 else 0.0
-        pct_outflow_6_10[t] = float(of[5:min(10, horizon)].sum() / total_of) if total_of > 0 else 0.0
-        n_assessment_yrs[t]  = float((assessments > 0).sum())
-        max_single_assessment[t] = float(assessments.max())
+    base_block = _model_block(assess_base_mat)
+    full_block = _model_block(assess_full_mat)
 
-    # Per-unit views
-    def per_unit(arr: np.ndarray) -> np.ndarray:
-        return arr / max(1, num_units)
+    base_stream = [base_contribution * ((1 + inflation_rate) ** y) for y in range(horizon)]
+    full_stream = [full_funding_contribution * ((1 + inflation_rate) ** y) for y in range(horizon)]
 
-    summary = {
+    return {
         "config": {
             "num_units": num_units,
-            "starting_reserve_total": starting_reserve,
-            "starting_reserve_per_unit": starting_reserve / max(1, num_units),
-            "annual_contribution_total": annual_contribution,
-            "annual_contribution_per_unit": annual_contribution / max(1, num_units),
-            "forecast_horizon_years": horizon,
+            "starting_reserve": starting_reserve,
+            "base_contribution": base_contribution,
+            "full_funding_contribution": full_funding_contribution,
+            "inflation_rate": inflation_rate,
+            "interest_rate": interest_rate,
+            "horizon": horizon,
             "num_trials": num_trials,
-            "life_shock_mean": life_shock_mean,
-            "life_shock_sigma": life_shock_sigma,
-            "cost_shock_mean": cost_shock_mean,
-            "cost_shock_sigma": cost_shock_sigma,
         },
-        "kpis_total": {
-            "assessment_yr_1_5":    percentile_summary(a_1_5),
-            "assessment_yr_6_10":   percentile_summary(a_6_10),
-            "assessment_yr_1_10":   percentile_summary(a_1_10),
-            "assessment_30yr_total": percentile_summary(a_total),
-            "outflow_30yr_total":   percentile_summary(total_outflow),
-        },
-        "kpis_per_unit": {
-            "assessment_yr_1_5":    percentile_summary(per_unit(a_1_5)),
-            "assessment_yr_6_10":   percentile_summary(per_unit(a_6_10)),
-            "assessment_yr_1_10":   percentile_summary(per_unit(a_1_10)),
-            "assessment_30yr_total": percentile_summary(per_unit(a_total)),
-        },
-        "kpis_balance_total": {
-            "min_balance_yr_1_5":  percentile_summary(min_bal_1_5),
-            "min_balance_yr_6_10": percentile_summary(min_bal_6_10),
-            "min_balance_30yr":    percentile_summary(min_bal_30yr),
-            "balance_at_yr10":     percentile_summary(bal_at_yr10),
-            "balance_at_yr30":     percentile_summary(bal_at_yr30),
-        },
-        "kpis_balance_per_unit": {
-            "min_balance_yr_1_5":  percentile_summary(per_unit(min_bal_1_5)),
-            "min_balance_yr_6_10": percentile_summary(per_unit(min_bal_6_10)),
-            "min_balance_30yr":    percentile_summary(per_unit(min_bal_30yr)),
-            "balance_at_yr10":     percentile_summary(per_unit(bal_at_yr10)),
-            "balance_at_yr30":     percentile_summary(per_unit(bal_at_yr30)),
-        },
-        "expenditure_distribution": {
-            "pct_outflow_yr_1_5":  float(np.median(pct_outflow_1_5)),
-            "pct_outflow_yr_6_10": float(np.median(pct_outflow_6_10)),
-        },
-        "assessment_frequency": {
-            "n_assessment_years":    percentile_summary(n_assessment_yrs),
-            "max_single_assessment": percentile_summary(max_single_assessment),
-        },
-        "probability_of_assessment": {
-            "yr_1_5": float(np.mean(a_1_5 > 0)),
-            "yr_6_10": float(np.mean(a_6_10 > 0)),
-            "yr_1_10": float(np.mean(a_1_10 > 0)),
-            "30yr": float(np.mean(a_total > 0)),
-        },
-        "contribution_adequacy_ratio": float(
-            annual_contribution / (float(np.median(total_outflow)) / horizon)
-            if np.median(total_outflow) > 0 else float("inf")
-        ),
-        # Raw trial-level arrays for downstream actuarial analysis (warranty pricing).
-        # These are the per-trial 5-year and 10-year cumulative assessment values.
-        "raw_trials": {
-            "assessment_yr_1_5":  a_1_5.tolist(),
-            "assessment_yr_6_10": a_6_10.tolist(),
-            "assessment_yr_1_10": a_1_10.tolist(),
+        "raw_trials_base": base_block.pop("raw_trials"),
+        "raw_trials_full": full_block.pop("raw_trials"),
+        "base": base_block,
+        "full": full_block,
+        "chart": {
+            "years": list(range(1, horizon + 1)),
+            "p50_outflow":      np.median(outflow_mat, axis=0).tolist(),
+            "p50_balance_base": np.median(balance_base_mat, axis=0).tolist(),
+            "p50_balance_full": np.median(balance_full_mat, axis=0).tolist(),
+            "base_contribution_stream": base_stream,
+            "full_contribution_stream": full_stream,
         },
     }
-    return summary
-
-
-# ---------------------------------------------------------------------------
-# Output
-# ---------------------------------------------------------------------------
-
-
-def write_outputs(summary: Dict[str, Any]) -> None:
-    with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
-        json.dump(summary, f, indent=2)
-
-    # Flatten KPIs into a CSV for at-a-glance reading
-    rows = []
-    for view in ("kpis_total", "kpis_per_unit"):
-        for kpi, stats in summary[view].items():
-            rows.append({
-                "view": view,
-                "kpi": kpi,
-                **{k: round(v, 2) for k, v in stats.items()},
-            })
-
-    with open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(
-            f,
-            fieldnames=["view", "kpi", "mean", "p25", "p50", "p75", "p90", "p95"],
-        )
-        writer.writeheader()
-        for row in rows:
-            writer.writerow(row)
-
-
-def print_summary(summary: Dict[str, Any]) -> None:
-    cfg = summary["config"]
-    print("\n" + "=" * 70)
-    print("RFS Stress Test Summary")
-    print("=" * 70)
-    print(f"  Property:  {cfg['num_units']} units, "
-          f"${cfg['starting_reserve_total']:,.0f} starting reserve "
-          f"(${cfg['starting_reserve_per_unit']:,.0f}/unit)")
-    print(f"  Funding:   ${cfg['annual_contribution_total']:,.0f}/yr held static "
-          f"(${cfg['annual_contribution_per_unit']:,.0f}/unit/yr)")
-    print(f"  Horizon:   {cfg['forecast_horizon_years']} yrs   |   Trials: {cfg['num_trials']:,}")
-    print(f"  Shocks:    life ×N({cfg['life_shock_mean']:.2f}, {cfg['life_shock_sigma']:.2f}); "
-          f"cost ×Lognorm(mean={cfg['cost_shock_mean']:.2f}, "
-          f"sigma={cfg['cost_shock_sigma']:.2f})")
-    print()
-    print(f"{'KPI':30}  {'mean':>12}  {'P25':>12}  {'P50':>12}  "
-          f"{'P75':>12}  {'P90':>12}  {'P95':>12}")
-    print("-" * 110)
-    for view_name, view in (("TOTAL", summary["kpis_total"]),
-                            ("PER UNIT", summary["kpis_per_unit"])):
-        print(f"-- {view_name} --")
-        for kpi, stats in view.items():
-            row = (f"{kpi:30}  "
-                   f"${stats['mean']:>10,.0f}  ${stats['p25']:>10,.0f}  "
-                   f"${stats['p50']:>10,.0f}  ${stats['p75']:>10,.0f}  "
-                   f"${stats['p90']:>10,.0f}  ${stats['p95']:>10,.0f}")
-            print(row)
-    print()
-    print("Probability of any special assessment:")
-    for window, prob in summary["probability_of_assessment"].items():
-        print(f"  {window:10}: {prob:.1%}")
-
-
-def main() -> None:
-    rows = calc.load_components()
-    components = calc.filter_components(rows)
-    print(f"Loaded {len(rows)} components, simulating {len(components)} after filter")
-
-    summary = run_stress_test(components)
-    write_outputs(summary)
-    print_summary(summary)
-
-    print(f"\nWrote {OUTPUT_JSON}")
-    print(f"Wrote {OUTPUT_CSV}")
-
-
-if __name__ == "__main__":
-    main()

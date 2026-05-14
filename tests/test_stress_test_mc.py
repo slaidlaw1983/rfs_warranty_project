@@ -113,3 +113,107 @@ def test_run_trial_interest_compounds_on_balance():
     )
     assert abs(result["balance_base"][0] - 105_000.0) < 0.01
     assert abs(result["balance_base"][1] - 110_250.0) < 0.01
+
+
+def _budget_starved_component():
+    # Forces SA in early years: huge year-1 cost relative to reserves/contribution
+    return [{
+        "Property Components": "Big Item",
+        "Replacement Curr": 0.0, "Replacement Desi": 5.0,
+        "Replacement Year": 1.0, "Replacement Cost": 500_000.0,
+        "Maintenance Curr": 0.0, "Maintenance Desi": 0.0,
+        "Maintenance Year": 0.0, "Maintenance Cost": 0.0,
+    }]
+
+
+def test_run_stress_test_summary_shape():
+    summary = st.run_stress_test(
+        components=_budget_starved_component(),
+        num_trials=100,
+        starting_reserve=50_000.0,
+        base_contribution=10_000.0,
+        full_funding_contribution=200_000.0,
+        inflation_rate=0.03,
+        interest_rate=0.025,
+        num_units=10,
+        horizon=30,
+    )
+
+    # config
+    cfg = summary["config"]
+    assert cfg["num_units"] == 10
+    assert cfg["base_contribution"] == 10_000.0
+    assert cfg["full_funding_contribution"] == 200_000.0
+    assert cfg["num_trials"] == 100
+    assert cfg["horizon"] == 30
+
+    # raw trials per model
+    for key in ("raw_trials_base", "raw_trials_full"):
+        rt = summary[key]
+        assert len(rt["assessment_yr_1_5"]) == 100
+        assert len(rt["assessment_yr_1_10"]) == 100
+        assert len(rt["assessment_yr_total_30"]) == 100
+
+    # per-model derived
+    for key in ("base", "full"):
+        m = summary[key]
+        assert set(m["prob_assessment"]) == {"yr_1_5", "yr_1_10", "yr_30"}
+        for v in m["prob_assessment"].values():
+            assert 0.0 <= v <= 1.0
+        assert "total" in m["median_total_assessment"]
+        assert "per_unit" in m["median_total_assessment"]
+        assert isinstance(m["median_n_assessment_years"], float)
+
+    # chart arrays
+    ch = summary["chart"]
+    assert len(ch["years"]) == 30
+    assert ch["years"][0] == 1 and ch["years"][-1] == 30
+    assert len(ch["p50_outflow"]) == 30
+    assert len(ch["p50_balance_base"]) == 30
+    assert len(ch["p50_balance_full"]) == 30
+    assert len(ch["base_contribution_stream"]) == 30
+    assert len(ch["full_contribution_stream"]) == 30
+
+    # removed blocks
+    for old_key in ("kpis_total", "kpis_per_unit", "kpis_balance_total",
+                    "kpis_balance_per_unit", "expenditure_distribution",
+                    "assessment_frequency"):
+        assert old_key not in summary, f"{old_key} should be removed"
+
+
+def test_run_stress_test_full_funding_lower_or_equal_prob():
+    # Same trials, higher contribution → P(SA) for Full ≤ P(SA) for Base
+    summary = st.run_stress_test(
+        components=_budget_starved_component(),
+        num_trials=200,
+        starting_reserve=50_000.0,
+        base_contribution=10_000.0,
+        full_funding_contribution=500_000.0,
+        inflation_rate=0.0,
+        interest_rate=0.0,
+        num_units=10,
+        horizon=30,
+    )
+    for window in ("yr_1_5", "yr_1_10", "yr_30"):
+        assert (summary["full"]["prob_assessment"][window]
+                <= summary["base"]["prob_assessment"][window])
+
+
+def test_run_stress_test_contribution_streams_match_inflation():
+    summary = st.run_stress_test(
+        components=_budget_starved_component(),
+        num_trials=10,
+        starting_reserve=0.0,
+        base_contribution=1000.0,
+        full_funding_contribution=2000.0,
+        inflation_rate=0.05,
+        interest_rate=0.0,
+        num_units=1,
+        horizon=5,
+    )
+    base_stream = summary["chart"]["base_contribution_stream"]
+    full_stream = summary["chart"]["full_contribution_stream"]
+    # Year 1 = nominal amount, year N = nominal × (1.05)^(N-1)
+    for y in range(5):
+        assert abs(base_stream[y] - 1000.0 * (1.05 ** y)) < 0.01
+        assert abs(full_stream[y] - 2000.0 * (1.05 ** y)) < 0.01

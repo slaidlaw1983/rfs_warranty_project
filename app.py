@@ -17,6 +17,7 @@ import stress_test as st
 from csv_parser import parse_reserve_csv
 from pricing import (PROPERTY_TYPES, UNIT_BRACKETS, get_pricing,
                      get_full_pricing_table)
+from warranty import calculate_warranty_risk_analysis
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "change-this-in-production")
@@ -39,136 +40,6 @@ def _require_password():
             401,
             {"WWW-Authenticate": 'Basic realm="RFS Stress Test"'},
         )
-
-
-def calculate_warranty_risk_analysis(raw_trials: dict,
-                                      num_units: int,
-                                      standard_price: float,
-                                      coverage_per_unit: float = 500.0,
-                                      premium_markup_pct: float = 0.50,
-                                      warranty_term_years: int = 5,
-                                      target_loss_ratio: float = 0.50) -> dict:
-    """
-    Use UNBIASED Monte Carlo trial outcomes to evaluate warranty risk.
-
-    Premium model: ONE-TIME premium paid at time of RFS, covers the full
-    warranty term. Premium = standard_price × premium_markup_pct.
-
-    Payout model: lump sum (coverage − deductible) on any special assessment
-    occurring within the warranty term. Probability of payout = P(any assessment
-    in the term) from the unbiased Monte Carlo (mean cost/life multipliers = 1.0).
-    """
-    # Pick the trial array matching the warranty term
-    if warranty_term_years == 5:
-        trials = raw_trials.get("assessment_yr_1_5", [])
-    elif warranty_term_years == 10:
-        trials = raw_trials.get("assessment_yr_1_10", [])
-    else:
-        trials = raw_trials.get("assessment_yr_1_5", [])
-
-    if not trials:
-        return None
-
-    coverage = coverage_per_unit * num_units
-    # Warranty premium is paid ONCE upfront and covers the entire term.
-    warranty_premium = standard_price * premium_markup_pct
-    deductible = coverage * 0.10
-
-    payout_per_claim   = max(0.0, coverage - deductible)
-    claim_count        = sum(1 for t in trials if t > 0)
-    claim_probability  = claim_count / len(trials)
-    expected_payout    = payout_per_claim * claim_probability
-
-    expected_assessment_uncapped = sum(trials) / len(trials)
-
-    actual_loss_ratio = expected_payout / warranty_premium if warranty_premium > 0 else 0.0
-
-    # Verdict colour
-    if actual_loss_ratio <= 0.30:
-        verdict = "highly_profitable"
-        verdict_label = "Highly profitable — room to expand coverage or reduce premium"
-    elif actual_loss_ratio <= target_loss_ratio:
-        verdict = "on_target"
-        verdict_label = "On target — warranty is profitable at these terms"
-    elif actual_loss_ratio <= target_loss_ratio + 0.20:
-        verdict = "marginal"
-        verdict_label = "Marginal — close to break-even; consider adjusting terms"
-    else:
-        verdict = "underpriced"
-        verdict_label = "Underpriced — warranty cannot cover modeled losses at these terms"
-
-    # Eligibility decision
-    if actual_loss_ratio <= target_loss_ratio:
-        eligibility = "eligible"
-        eligibility_label = "Eligible at standard terms"
-        eligibility_color = "success"
-        eligibility_reason = (
-            f"Loss ratio {actual_loss_ratio:.0%} is at or below target ({target_loss_ratio:.0%}). "
-            f"Standard 1.50× Standard pricing covers the modeled risk."
-        )
-    elif actual_loss_ratio <= 1.00:
-        eligibility = "conditional"
-        eligibility_label = "Conditional — custom quote required"
-        eligibility_color = "warning"
-        eligibility_reason = (
-            f"Loss ratio {actual_loss_ratio:.0%} exceeds target ({target_loss_ratio:.0%}). "
-            f"Standard pricing is insufficient — quote at the custom premium below."
-        )
-    else:
-        eligibility = "decline"
-        eligibility_label = "Decline — request funding plan first"
-        eligibility_color = "danger"
-        eligibility_reason = (
-            f"Loss ratio {actual_loss_ratio:.0%} exceeds 100% — warranty would pay out more "
-            f"than it collects. Property is structurally underfunded; recommend the board "
-            f"address contribution levels before considering warranty."
-        )
-
-    # Custom quote — what one-time premium would hit the target loss ratio?
-    custom_quote = None
-    if eligibility != "eligible" and expected_payout > 0:
-        required_premium = expected_payout / target_loss_ratio
-        required_premium_tier_mult = (
-            (standard_price + required_premium) / standard_price
-            if standard_price else 0.0
-        )
-        custom_quote = {
-            "required_premium":            round(required_premium, 0),
-            "required_premium_tier_mult":  round(required_premium_tier_mult, 2),
-            "default_premium_tier_mult":   round(1.0 + premium_markup_pct, 2),
-            "premium_increase_pct":        round(
-                (required_premium - warranty_premium) / warranty_premium, 2
-            ) if warranty_premium > 0 else 0.0,
-        }
-
-    return {
-        "target_terms": {
-            "warranty_term_years":  warranty_term_years,
-            "coverage_per_unit":    coverage_per_unit,
-            "coverage_total":       coverage,
-            "deductible":           deductible,
-            "premium_markup_pct":   premium_markup_pct,
-            "warranty_premium":     warranty_premium,
-            "target_loss_ratio":    target_loss_ratio,
-        },
-        "stress_results": {
-            "n_trials":                     len(trials),
-            "claim_probability":            claim_probability,
-            "payout_per_claim":             round(payout_per_claim, 0),
-            "expected_payout":              round(expected_payout, 0),
-            "mean_assessment_uncapped":     round(expected_assessment_uncapped, 0),
-        },
-        "actual_loss_ratio": round(actual_loss_ratio, 4),
-        "verdict":           verdict,
-        "verdict_label":     verdict_label,
-        "eligibility": {
-            "decision": eligibility,
-            "label":    eligibility_label,
-            "color":    eligibility_color,
-            "reason":   eligibility_reason,
-        },
-        "custom_quote": custom_quote,
-    }
 
 
 def calculate_annual_deterioration(components: list, num_units: int) -> dict:
@@ -423,7 +294,7 @@ def run():
             basic_price = BASIC_PRICES["Apartment"][idx]
         standard_price = _round_to_50(basic_price * STANDARD_MARKUP)
 
-        def _warranty(raw_trials_dict):
+        def _warranty(raw_trials_dict, funding_model):
             return calculate_warranty_risk_analysis(
                 raw_trials={"assessment_yr_1_5": raw_trials_dict["assessment_yr_1_5"]},
                 num_units=num_units,
@@ -431,11 +302,11 @@ def run():
                 coverage_per_unit=500.0,
                 premium_markup_pct=0.50,
                 warranty_term_years=5,
-                target_loss_ratio=0.50,
+                funding_model=funding_model,
             )
 
-        wa_base = _warranty(summary["raw_trials_base"])
-        wa_full = _warranty(summary["raw_trials_full"])
+        wa_base = _warranty(summary["raw_trials_base"], "base")
+        wa_full = _warranty(summary["raw_trials_full"], "full")
         for wa in (wa_base, wa_full):
             if wa:
                 wa["property_type_used"] = property_type
@@ -443,7 +314,8 @@ def run():
                 wa["methodology_note"] = (
                     "Probability computed from 1000 Monte Carlo trials. "
                     "Each component gets independent random cost (lognormal, mean=1.0) "
-                    "and life (normal, mean=1.0) multipliers per trial; σ=0.30 for both."
+                    "and life (normal, mean=1.0) multipliers per trial; σ=0.30 for both. "
+                    "Any special assessment in years 1–5 triggers the full coverage payout."
                 )
         summary["warranty_analysis"] = {"base": wa_base, "full": wa_full}
     except Exception as e:
@@ -482,8 +354,10 @@ def run():
         "full_p_sa_1_5":             summary["full"]["prob_assessment"]["yr_1_5"],
         "full_p_sa_1_10":            summary["full"]["prob_assessment"]["yr_1_10"],
         "full_p_sa_30":              summary["full"]["prob_assessment"]["yr_30"],
-        "base_median_total_sa":      summary["base"]["median_total_assessment"]["total"],
-        "full_median_total_sa":      summary["full"]["median_total_assessment"]["total"],
+        "base_sa_total_p5":          summary["base"]["sa_total"]["p5"],
+        "full_sa_total_p5":          summary["full"]["sa_total"]["p5"],
+        "base_sa_total_p50":         summary["base"]["sa_total"]["p50"],
+        "full_sa_total_p50":         summary["full"]["sa_total"]["p50"],
     }
     sheets_ok = _log_submission_to_sheets(log_payload)
 
@@ -503,9 +377,12 @@ def run():
         f"{log_payload['base_p_sa_1_10']:.1%} / {log_payload['base_p_sa_30']:.1%}\n"
         f"  Full funding: {log_payload['full_p_sa_1_5']:.1%} / "
         f"{log_payload['full_p_sa_1_10']:.1%} / {log_payload['full_p_sa_30']:.1%}\n\n"
-        f"Median total SA over 30yr:\n"
-        f"  Base:         ${log_payload['base_median_total_sa']:,.0f}\n"
-        f"  Full funding: ${log_payload['full_median_total_sa']:,.0f}\n\n"
+        f"P5 (worst-5%) total SA over 30yr:\n"
+        f"  Base:         ${log_payload['base_sa_total_p5']:,.0f}\n"
+        f"  Full funding: ${log_payload['full_sa_total_p5']:,.0f}\n\n"
+        f"P50 (typical) total SA over 30yr:\n"
+        f"  Base:         ${log_payload['base_sa_total_p50']:,.0f}\n"
+        f"  Full funding: ${log_payload['full_sa_total_p50']:,.0f}\n\n"
         f"Components loaded: {len(components)}\n"
         f"Sheet logged: {'yes' if sheets_ok else 'no (not configured or failed)'}\n"
     )
@@ -537,18 +414,26 @@ def download_csv():
     for model in ("base", "full"):
         m = summary.get(model, {}) or {}
         prob = m.get("prob_assessment", {})
-        med  = m.get("median_total_assessment", {})
+        sa_t = m.get("sa_total", {})
+        sa_pu = m.get("sa_per_unit", {})
+        n_yrs = m.get("n_assessment_years", {})
         rows.append({
-            "funding_model":            model,
-            "p_sa_yr_1_5":              round(prob.get("yr_1_5", 0.0), 4),
-            "p_sa_yr_1_10":             round(prob.get("yr_1_10", 0.0), 4),
-            "p_sa_yr_30":               round(prob.get("yr_30", 0.0), 4),
-            "median_total_assessment":  round(med.get("total", 0.0), 0),
-            "median_per_unit":          round(med.get("per_unit", 0.0), 0),
-            "median_n_assessment_yrs":  round(m.get("median_n_assessment_years", 0.0), 1),
-            "funding_ratio":            (summary.get("deterioration", {})
-                                                 .get("funding_ratio", {})
-                                                 .get(model)),
+            "funding_model":                  model,
+            "p_sa_yr_1_5":                    round(prob.get("yr_1_5", 0.0), 4),
+            "p_sa_yr_1_10":                   round(prob.get("yr_1_10", 0.0), 4),
+            "p_sa_yr_30":                     round(prob.get("yr_30", 0.0), 4),
+            "sa_total_p5":                    round(sa_t.get("p5", 0.0), 0),
+            "sa_total_p25":                   round(sa_t.get("p25", 0.0), 0),
+            "sa_total_p50":                   round(sa_t.get("p50", 0.0), 0),
+            "sa_per_unit_p5":                 round(sa_pu.get("p5", 0.0), 0),
+            "sa_per_unit_p25":                round(sa_pu.get("p25", 0.0), 0),
+            "sa_per_unit_p50":                round(sa_pu.get("p50", 0.0), 0),
+            "n_assessment_years_p5":          round(n_yrs.get("p5", 0.0), 1),
+            "n_assessment_years_p25":         round(n_yrs.get("p25", 0.0), 1),
+            "n_assessment_years_p50":         round(n_yrs.get("p50", 0.0), 1),
+            "funding_ratio":                  (summary.get("deterioration", {})
+                                                       .get("funding_ratio", {})
+                                                       .get(model)),
         })
 
     buf = io.StringIO()

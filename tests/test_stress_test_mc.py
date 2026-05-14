@@ -160,9 +160,19 @@ def test_run_stress_test_summary_shape():
         assert set(m["prob_assessment"]) == {"yr_1_5", "yr_1_10", "yr_30"}
         for v in m["prob_assessment"].values():
             assert 0.0 <= v <= 1.0
-        assert "total" in m["median_total_assessment"]
-        assert "per_unit" in m["median_total_assessment"]
-        assert isinstance(m["median_n_assessment_years"], float)
+
+        # New P5/P25/P50 distribution blocks
+        for block_name in ("sa_total", "sa_per_unit", "n_assessment_years"):
+            block = m[block_name]
+            assert set(block) == {"p5", "p25", "p50"}, f"{block_name} keys mismatch"
+            # Worse outcomes monotonically larger: p50 ≤ p25 ≤ p5
+            assert block["p50"] <= block["p25"] <= block["p5"], (
+                f"{block_name} not monotone: {block}"
+            )
+
+        # Removed in this task
+        assert "median_total_assessment" not in m
+        assert "median_n_assessment_years" not in m
 
     # chart arrays
     ch = summary["chart"]
@@ -197,6 +207,24 @@ def test_run_stress_test_full_funding_lower_or_equal_prob():
     for window in ("yr_1_5", "yr_1_10", "yr_30"):
         assert (summary["full"]["prob_assessment"][window]
                 <= summary["base"]["prob_assessment"][window])
+
+
+def test_run_stress_test_sa_per_unit_is_total_divided_by_units():
+    summary = st.run_stress_test(
+        components=_budget_starved_component(),
+        num_trials=100,
+        starting_reserve=0.0,
+        base_contribution=0.0,
+        full_funding_contribution=10_000_000.0,
+        inflation_rate=0.0,
+        interest_rate=0.0,
+        num_units=10,
+        horizon=30,
+    )
+    base = summary["base"]
+    # sa_per_unit is sa_total divided by num_units, element-wise
+    for k in ("p5", "p25", "p50"):
+        assert abs(base["sa_per_unit"][k] - base["sa_total"][k] / 10) < 0.01
 
 
 def test_run_stress_test_contribution_streams_match_inflation():

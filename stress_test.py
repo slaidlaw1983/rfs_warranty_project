@@ -113,19 +113,15 @@ def schedule_track(original_life: float,
                    original_cost: float,
                    shocked_life: float,
                    shocked_cost: float,
-                   horizon: int) -> List[float]:
+                   horizon: int,
+                   inflation_rate: float = 0.0) -> List[float]:
     """Year-indexed outflow array (length=horizon) for one track of one component.
 
     Three cases:
       * inactive track (life=0 and cost=0): returns zeros.
-      * cost-only (life=0, cost>0): one lump in year 1.
-      * scheduled (life>0, cost>0): events on a shocked cycle.
-
-    Event timing under shock: keep the engineer's "offset" (original_year -
-    original_life) so that year-1 events still happen in year 1, and shift
-    proportionally with life. Concretely: shocked_year = max(1, original_year
-    - (original_life - shocked_life)). Subsequent events recur every
-    shocked_life years.
+      * cost-only (life=0, cost>0): one lump in year 1, no inflation applied.
+      * scheduled (life>0, cost>0): events on a shocked cycle; each event is
+        multiplied by (1 + inflation_rate) ** year_index (year 1 = index 0, no inflation).
     """
     outflows = [0.0] * horizon
 
@@ -133,25 +129,21 @@ def schedule_track(original_life: float,
         return outflows
 
     if original_life <= 0 and original_cost > 0:
-        # Cost-only row: lump in year 1 at shocked cost
-        outflows[0] = shocked_cost
+        outflows[0] = shocked_cost  # year 1 lump, no inflation
         return outflows
 
     if original_cost <= 0:
-        return outflows  # life set but no cost — nothing to spend
+        return outflows
 
-    # Scheduled cycle. shocked_life floored at 1 already (calculator floor),
-    # but enforce here for safety.
     shocked_life = max(1.0, shocked_life)
-    delta = original_life - shocked_life          # how much life shrank
+    delta = original_life - shocked_life
     shocked_year = max(1.0, original_year - delta)
 
-    # Generate event years on the shocked cycle until we exit the horizon
     t = shocked_year
     while t <= horizon:
         idx = int(round(t)) - 1   # year 1 → index 0
         if 0 <= idx < horizon:
-            outflows[idx] += shocked_cost
+            outflows[idx] += shocked_cost * ((1 + inflation_rate) ** idx)
         t += shocked_life
 
     return outflows
@@ -166,19 +158,25 @@ def run_trial(components: List[Dict[str, Any]],
               life_mults: np.ndarray,
               cost_mults: np.ndarray,
               starting_reserve: float,
-              annual_contribution: float,
+              base_contribution: float,
+              full_funding_contribution: float,
+              inflation_rate: float,
+              interest_rate: float,
               horizon: int) -> Dict[str, Any]:
-    """Run one stress-test trial and return KPIs.
+    """Run one stress-test trial and return both funding-model paths.
 
-    ``life_mults`` and ``cost_mults`` are 1-D arrays of length
-    2*len(components) — first half is replacement track, second half is
-    maintenance track, in the same order as ``components``.
+    Shared work per trial:
+      - Sample-driven yearly outflow (with cost inflation)
+
+    Per funding model (Base / Full Funding):
+      - Contribution grows each year by (1 + inflation_rate)
+      - Interest accrues on (opening + contribution) at interest_rate
+      - Negative balance becomes a special assessment for that year; balance resets to 0
     """
     n = len(components)
     yearly_outflow = np.zeros(horizon)
 
     for i, comp in enumerate(components):
-        # Replacement track
         rep_life = comp["Replacement Desi"]
         rep_year = comp["Replacement Year"]
         rep_cost = comp["Replacement Cost"]
@@ -186,10 +184,10 @@ def run_trial(components: List[Dict[str, Any]],
             shocked_life = rep_life * life_mults[i]
             shocked_cost = rep_cost * cost_mults[i]
             of = schedule_track(rep_life, rep_year, rep_cost,
-                                shocked_life, shocked_cost, horizon)
+                                shocked_life, shocked_cost,
+                                horizon, inflation_rate)
             yearly_outflow += np.array(of)
 
-        # Maintenance track
         m_life = comp["Maintenance Desi"]
         m_year = comp["Maintenance Year"]
         m_cost = comp["Maintenance Cost"]
@@ -197,29 +195,37 @@ def run_trial(components: List[Dict[str, Any]],
             shocked_life = m_life * life_mults[n + i]
             shocked_cost = m_cost * cost_mults[n + i]
             of = schedule_track(m_life, m_year, m_cost,
-                                shocked_life, shocked_cost, horizon)
+                                shocked_life, shocked_cost,
+                                horizon, inflation_rate)
             yearly_outflow += np.array(of)
 
-    # Run the reserve balance forward; capture deficits as special assessments
-    balance = starting_reserve
-    assessments = np.zeros(horizon)
-    balance_path = np.zeros(horizon)
-    for y in range(horizon):
-        balance += annual_contribution - yearly_outflow[y]
-        if balance < 0:
-            assessments[y] = -balance   # bring balance back to zero
-            balance = 0.0
-        balance_path[y] = balance
+    def _walk(initial_contribution: float):
+        balance = float(starting_reserve)
+        contribution = float(initial_contribution)
+        balance_path = np.zeros(horizon)
+        assess_path = np.zeros(horizon)
+        for y in range(horizon):
+            opening = balance
+            interest = (opening + contribution) * interest_rate
+            running = opening + contribution + interest - yearly_outflow[y]
+            if running < 0:
+                assess_path[y] = -running
+                balance = 0.0
+            else:
+                balance = running
+            balance_path[y] = balance
+            contribution *= (1 + inflation_rate)
+        return balance_path, assess_path
+
+    balance_base, assess_base = _walk(base_contribution)
+    balance_full, assess_full = _walk(full_funding_contribution)
 
     return {
         "yearly_outflow": yearly_outflow,
-        "yearly_assessment": assessments,
-        "balance_path": balance_path,
-        "total_outflow_30yr": float(yearly_outflow.sum()),
-        "assessment_yr_1_5": float(assessments[0:5].sum()),
-        "assessment_yr_6_10": float(assessments[5:10].sum()),
-        "assessment_yr_1_10": float(assessments[0:10].sum()),
-        "assessment_total": float(assessments.sum()),
+        "balance_base": balance_base,
+        "balance_full": balance_full,
+        "assess_base": assess_base,
+        "assess_full": assess_full,
     }
 
 

@@ -294,7 +294,7 @@ def run():
             basic_price = BASIC_PRICES["Apartment"][idx]
         standard_price = _round_to_50(basic_price * STANDARD_MARKUP)
 
-        def _warranty(raw_trials_dict):
+        def _warranty(raw_trials_dict, funding_model):
             return calculate_warranty_risk_analysis(
                 raw_trials={"assessment_yr_1_5": raw_trials_dict["assessment_yr_1_5"]},
                 num_units=num_units,
@@ -302,11 +302,11 @@ def run():
                 coverage_per_unit=500.0,
                 premium_markup_pct=0.50,
                 warranty_term_years=5,
-                target_loss_ratio=0.50,
+                funding_model=funding_model,
             )
 
-        wa_base = _warranty(summary["raw_trials_base"])
-        wa_full = _warranty(summary["raw_trials_full"])
+        wa_base = _warranty(summary["raw_trials_base"], "base")
+        wa_full = _warranty(summary["raw_trials_full"], "full")
         for wa in (wa_base, wa_full):
             if wa:
                 wa["property_type_used"] = property_type
@@ -314,7 +314,8 @@ def run():
                 wa["methodology_note"] = (
                     "Probability computed from 1000 Monte Carlo trials. "
                     "Each component gets independent random cost (lognormal, mean=1.0) "
-                    "and life (normal, mean=1.0) multipliers per trial; σ=0.30 for both."
+                    "and life (normal, mean=1.0) multipliers per trial; σ=0.30 for both. "
+                    "Any special assessment in years 1–5 triggers the full coverage payout."
                 )
         summary["warranty_analysis"] = {"base": wa_base, "full": wa_full}
     except Exception as e:
@@ -353,8 +354,10 @@ def run():
         "full_p_sa_1_5":             summary["full"]["prob_assessment"]["yr_1_5"],
         "full_p_sa_1_10":            summary["full"]["prob_assessment"]["yr_1_10"],
         "full_p_sa_30":              summary["full"]["prob_assessment"]["yr_30"],
-        "base_median_total_sa":      summary["base"]["median_total_assessment"]["total"],
-        "full_median_total_sa":      summary["full"]["median_total_assessment"]["total"],
+        "base_sa_total_p5":          summary["base"]["sa_total"]["p5"],
+        "full_sa_total_p5":          summary["full"]["sa_total"]["p5"],
+        "base_sa_total_p50":         summary["base"]["sa_total"]["p50"],
+        "full_sa_total_p50":         summary["full"]["sa_total"]["p50"],
     }
     sheets_ok = _log_submission_to_sheets(log_payload)
 
@@ -374,9 +377,12 @@ def run():
         f"{log_payload['base_p_sa_1_10']:.1%} / {log_payload['base_p_sa_30']:.1%}\n"
         f"  Full funding: {log_payload['full_p_sa_1_5']:.1%} / "
         f"{log_payload['full_p_sa_1_10']:.1%} / {log_payload['full_p_sa_30']:.1%}\n\n"
-        f"Median total SA over 30yr:\n"
-        f"  Base:         ${log_payload['base_median_total_sa']:,.0f}\n"
-        f"  Full funding: ${log_payload['full_median_total_sa']:,.0f}\n\n"
+        f"P5 (worst-5%) total SA over 30yr:\n"
+        f"  Base:         ${log_payload['base_sa_total_p5']:,.0f}\n"
+        f"  Full funding: ${log_payload['full_sa_total_p5']:,.0f}\n\n"
+        f"P50 (typical) total SA over 30yr:\n"
+        f"  Base:         ${log_payload['base_sa_total_p50']:,.0f}\n"
+        f"  Full funding: ${log_payload['full_sa_total_p50']:,.0f}\n\n"
         f"Components loaded: {len(components)}\n"
         f"Sheet logged: {'yes' if sheets_ok else 'no (not configured or failed)'}\n"
     )
@@ -408,18 +414,26 @@ def download_csv():
     for model in ("base", "full"):
         m = summary.get(model, {}) or {}
         prob = m.get("prob_assessment", {})
-        med  = m.get("median_total_assessment", {})
+        sa_t = m.get("sa_total", {})
+        sa_pu = m.get("sa_per_unit", {})
+        n_yrs = m.get("n_assessment_years", {})
         rows.append({
-            "funding_model":            model,
-            "p_sa_yr_1_5":              round(prob.get("yr_1_5", 0.0), 4),
-            "p_sa_yr_1_10":             round(prob.get("yr_1_10", 0.0), 4),
-            "p_sa_yr_30":               round(prob.get("yr_30", 0.0), 4),
-            "median_total_assessment":  round(med.get("total", 0.0), 0),
-            "median_per_unit":          round(med.get("per_unit", 0.0), 0),
-            "median_n_assessment_yrs":  round(m.get("median_n_assessment_years", 0.0), 1),
-            "funding_ratio":            (summary.get("deterioration", {})
-                                                 .get("funding_ratio", {})
-                                                 .get(model)),
+            "funding_model":                  model,
+            "p_sa_yr_1_5":                    round(prob.get("yr_1_5", 0.0), 4),
+            "p_sa_yr_1_10":                   round(prob.get("yr_1_10", 0.0), 4),
+            "p_sa_yr_30":                     round(prob.get("yr_30", 0.0), 4),
+            "sa_total_p5":                    round(sa_t.get("p5", 0.0), 0),
+            "sa_total_p25":                   round(sa_t.get("p25", 0.0), 0),
+            "sa_total_p50":                   round(sa_t.get("p50", 0.0), 0),
+            "sa_per_unit_p5":                 round(sa_pu.get("p5", 0.0), 0),
+            "sa_per_unit_p25":                round(sa_pu.get("p25", 0.0), 0),
+            "sa_per_unit_p50":                round(sa_pu.get("p50", 0.0), 0),
+            "n_assessment_years_p5":          round(n_yrs.get("p5", 0.0), 1),
+            "n_assessment_years_p25":         round(n_yrs.get("p25", 0.0), 1),
+            "n_assessment_years_p50":         round(n_yrs.get("p50", 0.0), 1),
+            "funding_ratio":                  (summary.get("deterioration", {})
+                                                       .get("funding_ratio", {})
+                                                       .get(model)),
         })
 
     buf = io.StringIO()

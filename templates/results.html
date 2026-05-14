@@ -17,6 +17,12 @@
     .kpi-table td { font-size: 0.9rem; }
     .scenario-col-base { background: #f0f6fb; }
     .scenario-col-full { background: #e0ecf6; }
+    .pct-col { font-size: 0.78rem; font-weight: 500; color: #4a5568; }
+    .deterioration-row {
+      background: #fef9e7; border-radius: 8px; padding: 0.75rem 1rem;
+      display: flex; gap: 2rem; flex-wrap: wrap;
+    }
+    .premium-adj-note { font-size: 0.72rem; color: #6c757d; }
   </style>
 </head>
 <body>
@@ -32,8 +38,8 @@
       </p>
     </div>
     <div class="d-flex gap-2">
-      <a href="/download-csv" class="btn btn-success">⬇ Download CSV</a>
-      <a href="/" class="btn btn-outline-secondary">← New Test</a>
+      <a href="/download-csv" class="btn btn-success">&#x2B07; Download CSV</a>
+      <a href="/" class="btn btn-outline-secondary">&larr; New Test</a>
     </div>
   </div>
 
@@ -78,9 +84,26 @@
     </div>
   </div>
 
-  <!-- 3. KPI Comparison -->
+  <!-- 3. Property Deterioration -->
   <div class="card mb-4">
-    <div class="card-header py-2"><h6 class="mb-0">KPI Comparison</h6></div>
+    <div class="card-header py-2"><h6 class="mb-0">Property Deterioration</h6></div>
+    <div class="card-body py-3">
+      <div class="deterioration-row">
+        <div>
+          <div class="text-muted small">Total annual deterioration</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(summary.deterioration.total_annual) }}/yr</div>
+        </div>
+        <div>
+          <div class="text-muted small">Per unit</div>
+          <div class="fw-semibold fs-5">${{ "{:,.0f}".format(summary.deterioration.per_unit_annual) }}/yr/unit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Probability of Special Assessment -->
+  <div class="card mb-4">
+    <div class="card-header py-2"><h6 class="mb-0">Probability of Special Assessment</h6></div>
     <div class="card-body p-0">
       <table class="table table-hover kpi-table mb-0">
         <thead>
@@ -92,12 +115,12 @@
         </thead>
         <tbody>
           <tr>
-            <td>P(special assessment), years 1–5</td>
+            <td>P(special assessment), years 1&ndash;5</td>
             <td class="text-end scenario-col-base">{{ "{:.1%}".format(summary.base.prob_assessment.yr_1_5) }}</td>
             <td class="text-end scenario-col-full">{{ "{:.1%}".format(summary.full.prob_assessment.yr_1_5) }}</td>
           </tr>
           <tr>
-            <td>P(special assessment), years 1–10</td>
+            <td>P(special assessment), years 1&ndash;10</td>
             <td class="text-end scenario-col-base">{{ "{:.1%}".format(summary.base.prob_assessment.yr_1_10) }}</td>
             <td class="text-end scenario-col-full">{{ "{:.1%}".format(summary.full.prob_assessment.yr_1_10) }}</td>
           </tr>
@@ -107,31 +130,16 @@
             <td class="text-end scenario-col-full">{{ "{:.1%}".format(summary.full.prob_assessment.yr_30) }}</td>
           </tr>
           <tr>
-            <td>Median total special assessment (30 yr)</td>
-            <td class="text-end scenario-col-base">${{ "{:,.0f}".format(summary.base.median_total_assessment.total) }}</td>
-            <td class="text-end scenario-col-full">${{ "{:,.0f}".format(summary.full.median_total_assessment.total) }}</td>
-          </tr>
-          <tr>
-            <td>Median total SA per unit (30 yr)</td>
-            <td class="text-end scenario-col-base">${{ "{:,.0f}".format(summary.base.median_total_assessment.per_unit) }}</td>
-            <td class="text-end scenario-col-full">${{ "{:,.0f}".format(summary.full.median_total_assessment.per_unit) }}</td>
-          </tr>
-          <tr>
-            <td>Median # of assessment years (of 30)</td>
-            <td class="text-end scenario-col-base">{{ "{:.1f}".format(summary.base.median_n_assessment_years) }}</td>
-            <td class="text-end scenario-col-full">{{ "{:.1f}".format(summary.full.median_n_assessment_years) }}</td>
-          </tr>
-          <tr>
-            <td>Contribution ÷ annual deterioration</td>
+            <td>Contribution &divide; annual deterioration</td>
             <td class="text-end scenario-col-base">
               {% if summary.deterioration.funding_ratio.base is not none %}
                 {{ "{:.1%}".format(summary.deterioration.funding_ratio.base) }}
-              {% else %}—{% endif %}
+              {% else %}&mdash;{% endif %}
             </td>
             <td class="text-end scenario-col-full">
               {% if summary.deterioration.funding_ratio.full is not none %}
                 {{ "{:.1%}".format(summary.deterioration.funding_ratio.full) }}
-              {% else %}—{% endif %}
+              {% else %}&mdash;{% endif %}
             </td>
           </tr>
         </tbody>
@@ -139,7 +147,63 @@
     </div>
   </div>
 
-  <!-- 4. Warranty Risk Analysis -->
+  <!-- 5. Special Assessment Distribution -->
+  <div class="card mb-4">
+    <div class="card-header py-2"><h6 class="mb-0">Special Assessment Distribution</h6></div>
+    <div class="card-body p-0">
+      <table class="table table-hover kpi-table mb-0">
+        <thead>
+          <tr>
+            <th rowspan="2" style="vertical-align:bottom;">Metric</th>
+            <th colspan="3" class="text-center scenario-col-base">Base Case</th>
+            <th colspan="3" class="text-center scenario-col-full">Full Funding</th>
+          </tr>
+          <tr>
+            <th class="text-end scenario-col-base pct-col">P5 (worst 5%)</th>
+            <th class="text-end scenario-col-base pct-col">P25</th>
+            <th class="text-end scenario-col-base pct-col">P50 (typical)</th>
+            <th class="text-end scenario-col-full pct-col">P5 (worst 5%)</th>
+            <th class="text-end scenario-col-full pct-col">P25</th>
+            <th class="text-end scenario-col-full pct-col">P50 (typical)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Total special assessment over 30 yr</td>
+            <td class="text-end scenario-col-base">${{ "{:,.0f}".format(summary.base.sa_total.p5) }}</td>
+            <td class="text-end scenario-col-base">${{ "{:,.0f}".format(summary.base.sa_total.p25) }}</td>
+            <td class="text-end scenario-col-base">${{ "{:,.0f}".format(summary.base.sa_total.p50) }}</td>
+            <td class="text-end scenario-col-full">${{ "{:,.0f}".format(summary.full.sa_total.p5) }}</td>
+            <td class="text-end scenario-col-full">${{ "{:,.0f}".format(summary.full.sa_total.p25) }}</td>
+            <td class="text-end scenario-col-full">${{ "{:,.0f}".format(summary.full.sa_total.p50) }}</td>
+          </tr>
+          <tr>
+            <td>Total SA per unit</td>
+            <td class="text-end scenario-col-base">${{ "{:,.0f}".format(summary.base.sa_per_unit.p5) }}</td>
+            <td class="text-end scenario-col-base">${{ "{:,.0f}".format(summary.base.sa_per_unit.p25) }}</td>
+            <td class="text-end scenario-col-base">${{ "{:,.0f}".format(summary.base.sa_per_unit.p50) }}</td>
+            <td class="text-end scenario-col-full">${{ "{:,.0f}".format(summary.full.sa_per_unit.p5) }}</td>
+            <td class="text-end scenario-col-full">${{ "{:,.0f}".format(summary.full.sa_per_unit.p25) }}</td>
+            <td class="text-end scenario-col-full">${{ "{:,.0f}".format(summary.full.sa_per_unit.p50) }}</td>
+          </tr>
+          <tr>
+            <td># assessment years (of 30)</td>
+            <td class="text-end scenario-col-base">{{ "{:.1f}".format(summary.base.n_assessment_years.p5) }}</td>
+            <td class="text-end scenario-col-base">{{ "{:.1f}".format(summary.base.n_assessment_years.p25) }}</td>
+            <td class="text-end scenario-col-base">{{ "{:.1f}".format(summary.base.n_assessment_years.p50) }}</td>
+            <td class="text-end scenario-col-full">{{ "{:.1f}".format(summary.full.n_assessment_years.p5) }}</td>
+            <td class="text-end scenario-col-full">{{ "{:.1f}".format(summary.full.n_assessment_years.p25) }}</td>
+            <td class="text-end scenario-col-full">{{ "{:.1f}".format(summary.full.n_assessment_years.p50) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="px-3 py-2 text-muted" style="font-size:0.75rem;">
+        Pn = the n-th-worst percentile across 1000 Monte Carlo trials (P5 means a 5% chance of being this bad or worse).
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Warranty Risk Analysis -->
   {% if summary.warranty_analysis and (summary.warranty_analysis.base or summary.warranty_analysis.full) %}
   <div class="card mb-4">
     <div class="card-header gold py-2"><h6 class="mb-0 text-white">Warranty Risk Analysis</h6></div>
@@ -148,52 +212,68 @@
         {% for scenario in ['base', 'full'] %}
           {% set wa = summary.warranty_analysis[scenario] %}
           {% if wa %}
-          {% set verdict_color = {'highly_profitable':'success','on_target':'success','marginal':'warning','underpriced':'danger'}[wa.verdict] %}
           <div class="col-md-6">
             <div class="border rounded p-3 h-100 {% if scenario == 'base' %}scenario-col-base{% else %}scenario-col-full{% endif %}">
               <div class="fw-bold mb-2">
                 {{ 'Base Case' if scenario == 'base' else 'Full Funding' }}
                 <small class="text-muted">
-                  · {{ wa.property_type_used }} · Standard ${{ "{:,.0f}".format(wa.standard_price_used) }}
+                  &middot; {{ wa.property_type_used }} &middot; Standard ${{ "{:,.0f}".format(wa.standard_price_used) }}
                 </small>
               </div>
+
               <div class="row g-2 text-center mb-2">
+                <div class="col-12">
+                  <div class="text-muted small">Warranty Premium (one-time)</div>
+                  <div class="fw-bold fs-5">
+                    ${{ "{:,.0f}".format(wa.target_terms.warranty_premium_displayed) }}
+                  </div>
+                  {% if wa.verdict == 'moderate' %}
+                    <div class="premium-adj-note">
+                      Default ${{ "{:,.0f}".format(wa.target_terms.warranty_premium_default) }} &times; 1.25 (moderate-risk adjustment)
+                    </div>
+                  {% elif wa.applied_full_funding_discount %}
+                    <div class="premium-adj-note">
+                      Default ${{ "{:,.0f}".format(wa.target_terms.warranty_premium_default) }} &times; 0.80 (Full Funding discount)
+                    </div>
+                  {% endif %}
+                </div>
+
                 <div class="col-6">
-                  <div class="text-muted small">Premium (one-time)</div>
-                  <div class="fw-semibold">${{ "{:,.0f}".format(wa.target_terms.warranty_premium) }}</div>
+                  <div class="text-muted small">Coverage (total)</div>
+                  <div class="fw-semibold">${{ "{:,.0f}".format(wa.target_terms.coverage_total) }}</div>
                 </div>
                 <div class="col-6">
-                  <div class="text-muted small">Coverage / Deductible</div>
-                  <div class="fw-semibold">${{ "{:,.0f}".format(wa.target_terms.coverage_total) }} / ${{ "{:,.0f}".format(wa.target_terms.deductible) }}</div>
+                  <div class="text-muted small">Coverage per unit</div>
+                  <div class="fw-semibold">${{ "{:,.0f}".format(wa.target_terms.coverage_per_unit) }}</div>
                 </div>
-                <div class="col-6">
+
+                <div class="col-12">
                   <div class="text-muted small">Claim Probability (5 yr)</div>
                   <div class="fw-semibold">{{ "{:.1%}".format(wa.stress_results.claim_probability) }}</div>
                 </div>
+
                 <div class="col-6">
-                  <div class="text-muted small">Expected Payout</div>
+                  <div class="text-muted small">Payout per claim</div>
+                  <div class="fw-semibold">${{ "{:,.0f}".format(wa.stress_results.payout_per_claim) }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted small">Payout per unit</div>
+                  <div class="fw-semibold">${{ "{:,.0f}".format(wa.stress_results.payout_per_unit) }}</div>
+                </div>
+
+                <div class="col-6">
+                  <div class="text-muted small">Expected payout</div>
                   <div class="fw-semibold">${{ "{:,.0f}".format(wa.stress_results.expected_payout) }}</div>
                 </div>
                 <div class="col-6">
-                  <div class="text-muted small">Loss Ratio</div>
-                  <div class="fw-semibold">{{ "{:.0%}".format(wa.actual_loss_ratio) }}</div>
-                </div>
-                <div class="col-6">
-                  <div class="text-muted small">Verdict</div>
-                  <div class="fw-semibold text-{{ verdict_color }}">{{ wa.verdict.replace('_', ' ') }}</div>
+                  <div class="text-muted small">Loss ratio</div>
+                  <div class="fw-semibold">{{ "{:.0%}".format(wa.loss_ratio_displayed) }}</div>
                 </div>
               </div>
-              <div class="alert alert-{{ wa.eligibility.color }} mb-0 py-2">
-                <strong>{{ wa.eligibility.label }}</strong>
-                <div class="small">{{ wa.eligibility.reason }}</div>
-                {% if wa.custom_quote %}
-                <hr class="my-2"/>
-                <div class="small">
-                  Required premium for {{ "{:.0%}".format(wa.target_terms.target_loss_ratio) }} loss ratio:
-                  <strong>${{ "{:,.0f}".format(wa.custom_quote.required_premium) }}</strong>
-                  ({{ wa.custom_quote.required_premium_tier_mult }}× Standard)
-                </div>
-                {% endif %}
+
+              <div class="alert alert-{{ wa.verdict_color }} mb-0 py-2">
+                <strong>{{ wa.verdict_label }}</strong>
+                <div class="small">{{ wa.verdict_message }}</div>
               </div>
             </div>
           </div>
@@ -224,7 +304,8 @@
           backgroundColor: 'rgba(220, 53, 69, 0.7)',
           borderColor: 'rgba(220, 53, 69, 1)',
           borderWidth: 1,
-          order: 3
+          order: 3,
+          yAxisID: 'y'
         },
         {
           type: 'bar',
@@ -233,7 +314,8 @@
           backgroundColor: 'rgba(120, 180, 220, 0.7)',
           borderColor: 'rgba(120, 180, 220, 1)',
           borderWidth: 1,
-          order: 4
+          order: 4,
+          yAxisID: 'y'
         },
         {
           type: 'bar',
@@ -242,7 +324,8 @@
           backgroundColor: 'rgba(30, 80, 140, 0.7)',
           borderColor: 'rgba(30, 80, 140, 1)',
           borderWidth: 1,
-          order: 5
+          order: 5,
+          yAxisID: 'y'
         },
         {
           type: 'line',
@@ -253,7 +336,8 @@
           borderWidth: 2,
           tension: 0.2,
           fill: false,
-          order: 1
+          order: 1,
+          yAxisID: 'y1'
         },
         {
           type: 'line',
@@ -264,7 +348,8 @@
           borderWidth: 2,
           tension: 0.2,
           fill: false,
-          order: 2
+          order: 2,
+          yAxisID: 'y1'
         }
       ]
     },
@@ -284,8 +369,15 @@
       scales: {
         x: { title: { display: true, text: 'Year' } },
         y: {
-          title: { display: true, text: 'Dollars' },
+          position: 'left',
+          title: { display: true, text: 'Cash Flow ($)' },
           ticks: { callback: v => '$' + Number(v).toLocaleString() }
+        },
+        y1: {
+          position: 'right',
+          title: { display: true, text: 'Reserve Balance ($)' },
+          ticks: { callback: v => '$' + Number(v).toLocaleString() },
+          grid: { drawOnChartArea: false }
         }
       }
     }

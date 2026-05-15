@@ -305,7 +305,6 @@ def run():
                 raw_trials={"assessment_yr_1_5": raw_trials_dict["assessment_yr_1_5"]},
                 num_units=num_units,
                 standard_price=standard_price,
-                coverage_per_unit=500.0,
                 premium_markup_pct=0.50,
                 warranty_term_years=5,
                 funding_model=funding_model,
@@ -492,7 +491,11 @@ def save_policy_route():
         flash("Could not save policy — check that GSHEETS_* env vars are set.")
         return redirect(url_for("index"))
 
-    return redirect(url_for("portfolio_route", just_saved=policy_id))
+    # Land on a view that includes every status so the just-saved row is
+    # always visible — even when saved as pending_quote (the default).
+    return redirect(url_for("portfolio_route",
+                            status=["pending_quote", "approved", "rejected"],
+                            just_saved=policy_id))
 
 
 @app.route("/portfolio")

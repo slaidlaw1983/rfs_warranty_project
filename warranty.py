@@ -5,9 +5,11 @@ Pure functions — no Flask, no IO. Takes the per-trial 1-5yr special-assessment
 totals from the Monte Carlo run and produces a quote + verdict for the warranty
 product.
 
-Model (post-2026-05-14 spec):
-  - Payout per claim = full coverage_total on ANY special assessment in the term
-    (no deductible reduction). Coverage_per_unit defaults to $500.
+Model (post-2026-05-15 spec):
+  - Premium tier price = standard_price × (1 + premium_markup_pct).
+  - Coverage           = 2 × Premium tier price (no per-unit input).
+  - Payout per claim   = full coverage_total on ANY special assessment in the
+    term (no deductible).
   - Verdict tiers driven by default-premium loss ratio:
       ≤ 0.40        → "good"          (Good property to insure)
       0.40 – 0.80   → "moderate"      (Moderate risk; displayed premium × 1.25)
@@ -24,16 +26,17 @@ GOOD_CEILING       = 0.40   # loss ratio ≤ 0.40 → Good
 MODERATE_CEILING   = 0.80   # loss ratio ≤ 0.80 → Moderate; > 0.80 → Not eligible
 MODERATE_PREMIUM_MULT = 1.25
 FULL_FUNDING_DISCOUNT = 0.80   # 20% off
+COVERAGE_MULTIPLE     = 2.0    # Coverage = 2× Premium tier price
 
 
 def calculate_warranty_risk_analysis(
     raw_trials: Dict[str, Any],
     num_units: int,
     standard_price: float,
-    coverage_per_unit: float = 500.0,
     premium_markup_pct: float = 0.50,
     warranty_term_years: int = 5,
     funding_model: str = "base",
+    coverage_multiple: float = COVERAGE_MULTIPLE,
 ) -> Optional[Dict[str, Any]]:
     """
     Compute warranty pricing terms + verdict from a list of per-trial SA totals.
@@ -48,8 +51,10 @@ def calculate_warranty_risk_analysis(
     if not trials:
         return None
 
-    coverage_total = coverage_per_unit * num_units
+    premium_tier_price       = standard_price * (1.0 + premium_markup_pct)
     warranty_premium_default = standard_price * premium_markup_pct
+    coverage_total           = premium_tier_price * coverage_multiple
+    coverage_per_unit        = coverage_total / num_units if num_units else 0.0
 
     payout_per_claim   = coverage_total          # full coverage on any SA
     payout_per_unit    = coverage_per_unit
@@ -110,8 +115,9 @@ def calculate_warranty_risk_analysis(
     return {
         "target_terms": {
             "warranty_term_years":         warranty_term_years,
-            "coverage_per_unit":           coverage_per_unit,
-            "coverage_total":              coverage_total,
+            "premium_tier_price":          round(premium_tier_price, 0),
+            "coverage_per_unit":           round(coverage_per_unit, 0),
+            "coverage_total":              round(coverage_total, 0),
             "warranty_premium_default":    round(warranty_premium_default, 0),
             "warranty_premium_displayed":  round(warranty_premium_displayed, 0),
             "target_loss_ratio":           GOOD_CEILING,

@@ -13,6 +13,19 @@ def _trials(claim_prob: float, n: int = 1000) -> dict:
     return {"assessment_yr_1_5": assessment_yr_1_5}
 
 
+# Under the post-2026-05-15 spec:
+#   standard_price=10_000, premium_markup_pct=0.50
+#     → premium_tier_price = 15_000
+#     → warranty_premium    = 5_000
+#     → coverage_total      = 2 × 15_000 = 30_000  (10 units → 3000/unit)
+# The loss-ratio multiplier therefore becomes:
+#     LR = claim_prob × coverage / premium = claim_prob × 6
+# Tier cutoffs by claim probability:
+#     Good       claim_prob ≤ 0.0667
+#     Moderate   0.0667 < claim_prob ≤ 0.1333
+#     Not elig.  claim_prob > 0.1333
+
+
 def test_warranty_returns_none_if_no_trials():
     result = calculate_warranty_risk_analysis(
         raw_trials={"assessment_yr_1_5": []},
@@ -22,27 +35,36 @@ def test_warranty_returns_none_if_no_trials():
     assert result is None
 
 
-def test_payout_is_full_coverage_no_deductible():
-    # 10 units × $500 coverage_per_unit = $5,000 total coverage
+def test_coverage_is_two_times_premium_tier_price():
     result = calculate_warranty_risk_analysis(
-        raw_trials=_trials(0.5),
+        raw_trials=_trials(0.05),
+        num_units=10,
+        standard_price=10_000.0,
+    )
+    t = result["target_terms"]
+    assert t["premium_tier_price"] == 15_000.0
+    assert t["coverage_total"] == 30_000.0      # 2 × 15,000
+    assert t["coverage_per_unit"] == 3_000.0    # 30,000 / 10 units
+
+
+def test_payout_is_full_coverage_no_deductible():
+    result = calculate_warranty_risk_analysis(
+        raw_trials=_trials(0.05),
         num_units=10,
         standard_price=10_000.0,
     )
     t = result["target_terms"]
     s = result["stress_results"]
-    assert t["coverage_total"] == 5_000.0
-    assert t["coverage_per_unit"] == 500.0
-    assert "deductible" not in t           # deductible removed
-    assert s["payout_per_claim"] == 5_000.0  # full coverage
-    assert s["payout_per_unit"] == 500.0     # coverage_per_unit
+    assert t["coverage_total"] == 30_000.0
+    assert "deductible" not in t              # deductible removed
+    assert s["payout_per_claim"] == 30_000.0  # full coverage
+    assert s["payout_per_unit"] == 3_000.0    # coverage_total / num_units
 
 
 def test_verdict_good_at_low_loss_ratio():
-    # premium = 0.50 × 10k = 5,000. coverage = 5,000.
-    # claim_prob 0.3 → expected_payout = 0.3 × 5000 = 1,500 → LR = 0.30
+    # claim_prob 0.05 → LR = 0.05 × 6 = 0.30 → good
     result = calculate_warranty_risk_analysis(
-        raw_trials=_trials(0.3),
+        raw_trials=_trials(0.05),
         num_units=10,
         standard_price=10_000.0,
     )
@@ -55,9 +77,9 @@ def test_verdict_good_at_low_loss_ratio():
 
 
 def test_verdict_moderate_at_mid_loss_ratio():
-    # claim_prob 0.6 → expected_payout = 0.6 × 5000 = 3,000 → LR = 0.60 → moderate
+    # claim_prob 0.10 → LR = 0.10 × 6 = 0.60 → moderate
     result = calculate_warranty_risk_analysis(
-        raw_trials=_trials(0.6),
+        raw_trials=_trials(0.10),
         num_units=10,
         standard_price=10_000.0,
     )
@@ -71,9 +93,9 @@ def test_verdict_moderate_at_mid_loss_ratio():
 
 
 def test_verdict_not_eligible_at_high_loss_ratio():
-    # claim_prob 0.9 → expected_payout = 4,500 → LR = 0.90 → not_eligible
+    # claim_prob 0.20 → LR = 0.20 × 6 = 1.20 → not_eligible
     result = calculate_warranty_risk_analysis(
-        raw_trials=_trials(0.9),
+        raw_trials=_trials(0.20),
         num_units=10,
         standard_price=10_000.0,
     )
@@ -85,9 +107,8 @@ def test_verdict_not_eligible_at_high_loss_ratio():
 
 
 def test_full_funding_discount_when_good():
-    # Same trials as test_verdict_good, but with funding_model="full"
     result = calculate_warranty_risk_analysis(
-        raw_trials=_trials(0.3),
+        raw_trials=_trials(0.05),
         num_units=10,
         standard_price=10_000.0,
         funding_model="full",
@@ -102,9 +123,8 @@ def test_full_funding_discount_when_good():
 
 
 def test_no_full_funding_discount_when_moderate():
-    # Moderate verdict → no discount even if scenario=full
     result = calculate_warranty_risk_analysis(
-        raw_trials=_trials(0.6),
+        raw_trials=_trials(0.10),
         num_units=10,
         standard_price=10_000.0,
         funding_model="full",
@@ -117,9 +137,8 @@ def test_no_full_funding_discount_when_moderate():
 
 
 def test_base_scenario_never_gets_discount():
-    # Base scenario, Good verdict — no discount
     result = calculate_warranty_risk_analysis(
-        raw_trials=_trials(0.3),
+        raw_trials=_trials(0.05),
         num_units=10,
         standard_price=10_000.0,
         funding_model="base",
@@ -131,10 +150,11 @@ def test_base_scenario_never_gets_discount():
 
 
 def test_verdict_boundary_at_40_pct_is_good():
-    # LR exactly at 0.40 should be Good (≤ 0.40 boundary)
-    # premium=5000, claim_prob=0.4 → expected_payout=2000 → LR=0.40
+    # LR exactly at 0.40 should be Good (≤ 0.40 boundary).
+    # With LR = claim_prob × 6, we need claim_prob = 1/15 → 2 out of 30 trials.
+    raw_trials = {"assessment_yr_1_5": [1.0] * 2 + [0.0] * 28}
     result = calculate_warranty_risk_analysis(
-        raw_trials=_trials(0.4),
+        raw_trials=raw_trials,
         num_units=10,
         standard_price=10_000.0,
     )
@@ -143,9 +163,10 @@ def test_verdict_boundary_at_40_pct_is_good():
 
 
 def test_verdict_boundary_at_80_pct_is_moderate():
-    # LR exactly at 0.80 should be Moderate (≤ 0.80 boundary)
+    # LR exactly at 0.80 → claim_prob = 2/15 → 4 out of 30 trials.
+    raw_trials = {"assessment_yr_1_5": [1.0] * 4 + [0.0] * 26}
     result = calculate_warranty_risk_analysis(
-        raw_trials=_trials(0.8),
+        raw_trials=raw_trials,
         num_units=10,
         standard_price=10_000.0,
     )

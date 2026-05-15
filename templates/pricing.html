@@ -77,10 +77,10 @@
   </h4>
 
   <div class="row g-3 mb-4">
-    <!-- Basic -->
+    <!-- Basic RFS -->
     <div class="col-md-4">
       <div class="card tier-card h-100">
-        <div class="card-header py-2"><h6 class="mb-0">Basic</h6></div>
+        <div class="card-header py-2"><h6 class="mb-0">{{ quote.basic.name }}</h6></div>
         <div class="card-body text-center">
           <div class="tier-price">${{ "{:,.0f}".format(quote.basic.price) }}</div>
           <div class="text-muted small mb-3">RFS Only</div>
@@ -91,13 +91,13 @@
       </div>
     </div>
 
-    <!-- Standard -->
+    <!-- Standard RFS Bundle -->
     <div class="col-md-4">
       <div class="card tier-card h-100">
-        <div class="card-header py-2"><h6 class="mb-0">Standard</h6></div>
+        <div class="card-header py-2"><h6 class="mb-0">{{ quote.standard.name }}</h6></div>
         <div class="card-body text-center">
           <div class="tier-price">${{ "{:,.0f}".format(quote.standard.price) }}</div>
-          <div class="text-muted small mb-3">{{ quote.standard.markup }} · RFS + StelorPM</div>
+          <div class="text-muted small mb-3">RFS + StelorPM</div>
           <ul class="text-start">
             {% for item in quote.standard.includes %}<li>{{ item }}</li>{% endfor %}
           </ul>
@@ -105,14 +105,14 @@
       </div>
     </div>
 
-    <!-- Premium -->
+    <!-- Premium RFS Bundle + Warranty -->
     <div class="col-md-4">
       <div class="card tier-card featured h-100">
-        <div class="card-header gold py-2"><h6 class="mb-0 text-white">Premium (Warranty)</h6></div>
+        <div class="card-header gold py-2"><h6 class="mb-0 text-white">{{ quote.premium.name }}</h6></div>
         <div class="card-body text-center">
           <div class="tier-price">${{ "{:,.0f}".format(quote.premium.price) }}</div>
           <div class="text-muted small mb-3">
-            {{ quote.premium.markup_vs_standard }} · Coverage ${{ "{:,.0f}".format(quote.premium.coverage) }} / Deductible ${{ "{:,.0f}".format(quote.premium.deductible) }}
+            Coverage ${{ "{:,.0f}".format(quote.premium.coverage) }}
           </div>
           <ul class="text-start">
             {% for item in quote.premium.includes %}<li>{{ item }}</li>{% endfor %}
@@ -122,10 +122,7 @@
             <div>Standard: ${{ "{:,.0f}".format(quote.standard.price) }}</div>
             <div>+ Warranty premium: ${{ "{:,.0f}".format(quote.premium.warranty_premium) }}</div>
             <div>= ${{ "{:,.0f}".format(quote.premium.price) }}</div>
-            <div class="mt-1">
-              Warranty premium = (Coverage × {{ "{:.0%}".format(quote.premium.expected_claim_rate) }} claim rate) ÷ {{ "{:.0%}".format(quote.premium.target_loss_ratio) }} loss ratio
-            </div>
-            <div>Expected loss/condo: ${{ "{:,.0f}".format(quote.premium.expected_loss) }}</div>
+            <div class="mt-1">Coverage = 2× Premium tier price.</div>
           </div>
         </div>
       </div>
@@ -137,7 +134,7 @@
   <div class="card">
     <div class="card-header py-2 d-flex justify-content-between align-items-center">
       <h6 class="mb-0">Full Pricing Matrix</h6>
-      <small class="text-white-50">Warranty actuarial basis: 10% claim rate, 40% target loss ratio</small>
+      <small class="text-white-50">Coverage = 2× Premium tier price · no deductible</small>
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
@@ -146,13 +143,11 @@
             <tr>
               <th>Property Type</th>
               <th>Units</th>
-              <th class="text-end">Basic</th>
-              <th class="text-end">Standard</th>
+              <th class="text-end">Basic RFS</th>
+              <th class="text-end">Standard Bundle</th>
               <th class="text-end">+ Warranty</th>
-              <th class="text-end">Premium</th>
-              <th class="text-end">vs Std</th>
+              <th class="text-end">Premium Bundle</th>
               <th class="text-end">Coverage</th>
-              <th class="text-end">Deductible</th>
             </tr>
           </thead>
           <tbody>
@@ -161,7 +156,7 @@
               {% if r.property_type != ns.current %}
                 {% set ns.current = r.property_type %}
                 <tr class="table-secondary">
-                  <td colspan="9" class="fw-semibold">{{ r.property_type }}</td>
+                  <td colspan="7" class="fw-semibold">{{ r.property_type }}</td>
                 </tr>
               {% endif %}
               <tr>
@@ -171,9 +166,7 @@
                 <td class="text-end">${{ "{:,.0f}".format(r.standard) }}</td>
                 <td class="text-end text-muted">+${{ "{:,.0f}".format(r.warranty_premium) }}</td>
                 <td class="text-end fw-semibold" style="color:#b8860b;">${{ "{:,.0f}".format(r.premium) }}</td>
-                <td class="text-end">{{ "{:.2f}".format(r.markup_vs_std) }}×</td>
                 <td class="text-end">${{ "{:,.0f}".format(r.coverage) }}</td>
-                <td class="text-end">${{ "{:,.0f}".format(r.deductible) }}</td>
               </tr>
             {% endfor %}
           </tbody>

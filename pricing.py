@@ -2,20 +2,15 @@
 Pricing calculator for RFS service tiers.
 
 Three tiers (per property type and unit-count bracket):
-  - Basic    — RFS only (from pricing table)
-  - Standard — RFS + StelorPM (Basic × 1.20)
-  - Premium  — Standard + Warranty (Standard × 1.50 total)
+  - Basic RFS                       — RFS only (from pricing table)
+  - Standard RFS Bundle             — RFS + StelorPM (Basic × 1.20)
+  - Premium RFS Bundle + Warranty   — Standard × 1.50, includes warranty
 
-Premium tier is fixed at 1.50× Standard. The warranty coverage is then
-calculated to satisfy actuarial constraints:
-
-    Warranty premium = Premium − Standard = 0.50 × Standard
-    Expected loss    = Warranty premium × Loss ratio target
-    Coverage         = Expected loss / Claim rate = 2.0 × Standard
-    Deductible       = 10% of Coverage
-
-This keeps the Premium tier price predictable (always 50% over Standard)
-while letting Stelor maintain the target loss ratio.
+Warranty terms (post-2026-05-15 spec):
+  - Warranty premium = Premium − Standard (= 0.50 × Standard at the default markup).
+  - Coverage         = 2.0 × Premium tier price.
+  - No deductible — any covered special assessment in the term triggers the
+    full coverage payout.
 """
 
 from typing import Dict, Any, List
@@ -44,11 +39,7 @@ BASIC_PRICES: Dict[str, List[int]] = {
 
 STANDARD_MARKUP    = 1.20    # Standard = Basic × 1.20 (RFS + StelorPM software)
 PREMIUM_MARKUP     = 1.50    # Premium  = Standard × 1.50 (project cap)
-DEDUCTIBLE_PCT     = 0.10    # 10% of coverage
-
-# Actuarial parameters
-EXPECTED_CLAIM_RATE = 0.10   # 10% — 1 in 10 condos files a claim
-TARGET_LOSS_RATIO   = 0.40   # 40% — claims payouts ÷ warranty premium
+COVERAGE_MULTIPLE  = 2.0     # Coverage = 2.0 × Premium tier price
 
 
 def bracket_index_for_units(num_units: int) -> int:
@@ -64,41 +55,26 @@ def _round_to_50(value: float) -> int:
 
 
 def calculate_warranty_terms(standard_price: float,
-                              claim_rate: float = EXPECTED_CLAIM_RATE,
-                              loss_ratio: float = TARGET_LOSS_RATIO,
                               premium_markup: float = PREMIUM_MARKUP,
-                              deductible_pct: float = DEDUCTIBLE_PCT) -> Dict[str, int]:
+                              coverage_multiple: float = COVERAGE_MULTIPLE) -> Dict[str, int]:
     """
-    Given the Standard tier price, derive all warranty terms.
+    Given the Standard tier price, derive the warranty terms.
 
-    Premium tier price is fixed at standard × premium_markup. Coverage is
-    solved from the actuarial relationship:
-        warranty_premium = premium − standard
-        coverage = warranty_premium × loss_ratio / claim_rate
-
-    All values rounded to nearest $50.
+    Premium tier price = standard × premium_markup. Coverage = coverage_multiple
+    × Premium tier price. All values rounded to nearest $50.
     """
     premium_price    = _round_to_50(standard_price * premium_markup)
     warranty_premium = premium_price - standard_price
-    expected_loss    = warranty_premium * loss_ratio
-    coverage         = _round_to_50(expected_loss / claim_rate)
-    deductible       = _round_to_50(coverage * deductible_pct)
+    coverage         = _round_to_50(premium_price * coverage_multiple)
     return {
         "premium_price":    premium_price,
         "warranty_premium": warranty_premium,
         "coverage":         coverage,
-        "deductible":       deductible,
-        "expected_loss":    round(expected_loss),
     }
 
 
 def get_pricing(property_type: str, num_units: int) -> Dict[str, Any]:
-    """
-    Return the three-tier pricing structure for a given property.
-
-    Premium = Standard × 1.50. Coverage is solved actuarially so the warranty
-    portion of the premium hits the 40% loss-to-premium target at a 10% claim rate.
-    """
+    """Return the three-tier pricing structure for a given property."""
     if property_type not in BASIC_PRICES:
         raise ValueError(f"Unknown property type: {property_type}")
     if num_units < 2:
@@ -117,11 +93,12 @@ def get_pricing(property_type: str, num_units: int) -> Dict[str, Any]:
         "bracket":       {"label": bracket["label"], "min": bracket["min"], "max": bracket["max"]},
         "basic": {
             "price":    basic_price,
+            "name":     "Basic RFS",
             "includes": ["Reserve Fund Study (RFS) report"],
         },
         "standard": {
             "price":    standard_price,
-            "markup":   f"{STANDARD_MARKUP:.2f}× Basic",
+            "name":     "Standard RFS Bundle",
             "includes": [
                 "Reserve Fund Study (RFS) report",
                 "StelorPM software (property management)",
@@ -129,18 +106,13 @@ def get_pricing(property_type: str, num_units: int) -> Dict[str, Any]:
         },
         "premium": {
             "price":               w["premium_price"],
+            "name":                "Premium RFS Bundle + Warranty",
             "warranty_premium":    w["warranty_premium"],
-            "markup_vs_standard":  f"{PREMIUM_MARKUP:.2f}× Standard",
             "coverage":            w["coverage"],
-            "deductible":          w["deductible"],
-            "expected_claim_rate": EXPECTED_CLAIM_RATE,
-            "target_loss_ratio":   TARGET_LOSS_RATIO,
-            "expected_loss":       w["expected_loss"],
             "includes": [
                 "Reserve Fund Study (RFS) report",
                 "StelorPM software (property management)",
                 f"Warranty coverage up to ${w['coverage']:,} per claim",
-                f"${w['deductible']:,} deductible per claim",
                 "Stress-test analysis included",
             ],
         },
@@ -162,8 +134,6 @@ def get_full_pricing_table() -> List[Dict[str, Any]]:
                 "standard":         standard,
                 "warranty_premium": w["warranty_premium"],
                 "premium":          w["premium_price"],
-                "markup_vs_std":    PREMIUM_MARKUP,
                 "coverage":         w["coverage"],
-                "deductible":       w["deductible"],
             })
     return rows

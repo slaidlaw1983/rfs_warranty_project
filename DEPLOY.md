@@ -59,9 +59,13 @@ from history before going further.
 ## 3. Create a Gmail App Password
 
 1. Visit <https://myaccount.google.com/security>.
-2. Turn on **2-Step Verification** if it isn't already.
+2. Turn on **2-Step Verification** if it isn't already. (Required — the
+   app-passwords page won't appear without it.)
 3. Visit <https://myaccount.google.com/apppasswords>.
-4. Pick "Mail" and "Other (Custom name)", call it "RFS Stress Test".
+4. In the single "App name" text field, type `RFS Stress Test` (or any label
+   you'll recognize) and click **Create**.
+   *(If the page used to show "Select app" and "Select device" dropdowns,
+   Google retired those in 2024 — just the one text field now.)*
 5. Google gives you a 16-character password like `abcd efgh ijkl mnop`. **Copy
    it — you only see it once.** Strip the spaces when you paste it later.
 

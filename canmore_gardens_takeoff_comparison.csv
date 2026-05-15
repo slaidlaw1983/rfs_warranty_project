@@ -1,0 +1,24 @@
+component,auto_qty,auto_unit,manual_qty,manual_unit,ratio_manual_over_auto,manual_components,notes
+Roof - Asphalt Shingle,3163,sqft,4220,SF,1.334,Roof - Asphalt Shingles (4220 SF),Manual +33%
+Roof - Fascia,240,lnft,,,,,Not in manual workbook
+Siding - Manufactured Wood,3761,sqft,3510,SF,0.933,Siding - Wood (3510 SF),Match (manual -7%)
+Siding - Stucco,559,sqft,1085,SF,1.941,Siding - Stucco (1085 SF),Manual +94%
+Windows,44,ea,42,EA,0.955,Windows (36 EA) + Windows - 2018 (6 EA),Match (manual -5%)
+Doors - Swing,18,ea,9,EA,0.5,Doors - Swing (9 EA),Manual -50% (auto 100% higher)
+Deck,630,sqft,420,SF,0.667,Balcony - Wood (420 SF),Manual -33% (auto 50% higher)
+Balcony Railings - Wood,171,lnft,100,LF,0.585,Balcony Railings - Wood (100 LF),Manual -42% (auto 71% higher)
+Soffits - Aluminum,480,sqft,840,SF,1.75,Soffits - Aluminum (840 SF),Manual +75%
+Eavestroughs and Downspouts,372,lnft,483,LF,1.298,Eavestrough (290 LF) + Downspouts (193 LF),Manual +30%
+Asphalt,509,sqft,,,,,Not in manual workbook
+Concrete,3566,sqft,1725,SF,0.484,Concrete (1725 SF),Manual -52% (auto 107% higher)
+Landscaping,6113,sqft,1,EA,,Landscaping (1 EA),"UNIT MISMATCH (auto=sqft, manual=EA) — methodology differs"
+Caulking,984,lnft,51,EA,,Caulking (51 EA),"UNIT MISMATCH (auto=lnft, manual=EA) — methodology differs"
+Trim - Wood,1070,lnft,51,EA,,Wood Trim (51 EA),"UNIT MISMATCH (auto=lnft, manual=EA) — methodology differs"
+Lighting - Exterior,18,ea,15,EA,0.833,Lighting (15 EA),Manual -17% (auto 20% higher)
+Foundation,720,sqft,1,EA,,Foundation (1 EA),"UNIT MISMATCH (auto=sqft, manual=EA) — methodology differs"
+Shed,1,ea,1895,SF,,Shed - Roof (575 SF) + Shed - Swing Door (10 SF) + Shed - Wood Siding (1310 SF),"UNIT MISMATCH (auto=ea, manual=SF) — methodology differs"
+Electrical/Water,1,ea,1,EA,1.0,Electrical/Water (1 EA),Match (manual +0%)
+Underground Utilities,464,lnft,1,EA,,Underground Utilities (1 EA),"UNIT MISMATCH (auto=lnft, manual=EA) — methodology differs"
+Retaining Walls - Wood,120,lnft,,,,,Not in manual workbook
+Property Signage,1,ea,,,,,Not in manual workbook
+Reserve Fund Study,1,ea,1,EA,1.0,Reserve Fund Study (1 EA),Match (manual +0%)

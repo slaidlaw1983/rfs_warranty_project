@@ -1,0 +1,19 @@
+Component,Replacement Budget,Design Life,Current Age,Replacement Year,Current Replacement Cost,Maintenance Budget,Maintenance Life Cycle,Remaining Maintenance Life,Maintenance Year,Current Maintenance Cost
+Asphalt,Yes,25,23,3,39750,Yes,8,11,11,15000
+Concrete,No,,,,,Yes,8,5,5,3000
+Electrical and Water,No,,,,,Yes,10,2,2,15000
+Fence - Wood,Yes,20,1,20,65250,Yes,5,5,5,10000
+Garbage Shed,No,,,,,Yes,5,5,5,1000
+Landscaping,No,,,,,Yes,5,2,2,2500
+Underground Utilities,No,,,,,Yes,10,11,11,10000
+Caulking,Yes,15,3,13,11500,No,,,,
+Eavestroughs and Downspouts,Yes,30,2,29,1450,No,,,,
+Exterior Doors,No,,,,,No,,,,
+Roof - Bur Mod,Yes,20,19,2,17000,No,,,,
+Roof - Duro-Last,Yes,20,2,19,65000,No,,,,
+Siding - Aluminum,Yes,50,2,49,113000,No,,,,
+Siding - Brick,No,,,,,Yes,10,4,4,15000
+Siding - Vinyl,Yes,35,13,23,11500,No,,,,
+Soffits,Yes,30,28,3,7500,No,,,,
+Windows,No,,,,,No,,,,
+Reserve Fund Study,Yes,5,1,5,2600,No,,,,
